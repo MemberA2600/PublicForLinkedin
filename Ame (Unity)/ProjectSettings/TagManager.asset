@@ -1,0 +1,63 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!78 &1
+TagManager:
+  serializedVersion: 2
+  tags:
+  - grass
+  - playerShoot
+  - enemyShoot
+  - Enemy
+  - EnemyDouble
+  layers:
+  - Default
+  - TransparentFX
+  - Ignore Raycast
+  - 
+  - Water
+  - UI
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  m_SortingLayers:
+  - name: BackGround
+    uniqueID: 2207199155
+    locked: 0
+  - name: Projectile
+    uniqueID: 2265988875
+    locked: 0
+  - name: Girl
+    uniqueID: 1779035461
+    locked: 0
+  - name: Default
+    uniqueID: 0
+    locked: 0
+  - name: ForGround
+    uniqueID: 2765010589
+    locked: 0
+  - name: OVERALL
+    uniqueID: 2802809523
+    locked: 0
