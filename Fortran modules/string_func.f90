@@ -1,0 +1,303 @@
+module string_func
+    implicit none
+
+    !type Array
+    !    character(len=:), dimension(:), allocatable :: array
+    !    integer :: charLen, arrayLen
+    !
+    !end type
+
+    contains
+
+    function string_replace(string, original, new) result(new_string)
+        character(LEN=*, kind=4) :: string, original, new
+        character(LEN=len(string)+len(new), kind=4) :: new_string
+        integer :: x1, x2
+        logical :: found_it
+
+        found_it = .FALSE.;
+
+        do x1 = 1, len(string)-len(original), 1
+            x2 = x1+len(original)-1
+            if (string(x1:x2)==original) then
+                    found_it = .TRUE.
+                    exit
+            end if
+        end do
+
+        if (found_it .EQV. .FALSE.) then
+            new_string = string
+        else
+            new_string = string(1:x1-1)//new//string(x2+1:len_trim(string))
+        end if
+    end function
+
+    function startswith(string, start) result(isIt)
+        character(len=*, kind=4) string, start
+        logical :: isIt
+
+        isIt = .FALSE.
+        if (string(1:len(start)) == start) isIt = .TRUE.
+
+    end function
+
+    function endswith(string, ender) result(isIt)
+        character(len=*, kind=4) string, ender
+        logical :: isIt
+
+        isIt = .FALSE.
+        if (trim(string(len(string)-len(ender)+1:len(string))) == trim(ender)) isIt = .TRUE.
+
+    end function
+
+    function split(string, deliminator, maximum) result(temp_array)
+        character(len=*, kind=4) :: string, deliminator
+        character(len=100, kind=4), dimension(:), allocatable :: temp_array
+        integer :: num, x1, x2, alloc_stat, maximum, PrevPoint, delay
+
+        num = 1
+
+        do x1 = 1, len(string), 1
+            x2 = x1+len(deliminator)-1
+            if (string(x1:x2)==deliminator) then
+                num=num+1
+            endif
+            if (num==maximum) exit
+        end do
+
+        !allocate(character(longest)::temp_array%array(num), stat = alloc_stat)
+        !write(*,*) size(temp_array%array)
+        allocate(temp_array(num), stat=alloc_stat)
+
+        num = 1
+        PrevPoint = 1
+        delay = 0
+        do x1 = 1, len(string), 1
+            x2 = x1+len(deliminator)-1
+            if (delay>0) then
+                delay = delay - 1
+                cycle
+            end if
+            if (string(x1:x2)==deliminator) then
+                temp_array(num) = string(PrevPoint:x1-1)
+
+                PrevPoint = x1 + len(deliminator)
+                delay = len(deliminator) - 1
+                num = num + 1
+            end if
+        end do
+
+        temp_array(num) = string(PrevPoint:len(string))
+
+    end function
+
+    function toKind4(s) result(s2)
+        character(len=*, kind=1) :: s
+        character(len=:, kind=4), allocatable :: s2
+        s2=s
+    end function
+
+    function toKind1(s) result(s2)
+        character(len=*, kind=4) :: s
+        character(len=:, kind=1), allocatable :: s2
+        s2=s
+    end function
+
+    function upper(s) result(s2)
+        character(len=*, kind=4) :: s
+        character(len=:, kind=4), allocatable :: s2
+        integer :: num
+
+        s2=s
+        do num=1, len_trim(s), 1
+            if (ichar(s(num:num))>96 .AND. ichar(s(num:num))<123) then
+                s2(num:num) = char(ichar(s(num:num))-32)
+
+            end if
+        end do
+    end function
+
+    function lower(s) result(s2)
+        character(len=*, kind=4) :: s
+        character(len=:, kind=4), allocatable :: s2
+        integer :: num
+
+        s2=s
+        do num=1, len_trim(s), 1
+            if (ichar(s(num:num))>64 .AND. ichar(s(num:num))<91) then
+                s2(num:num) = char(ichar(s(num:num))+32)
+
+            end if
+        end do
+    end function
+
+    function findAll(s, pattern) result(array)
+        character(len=:, kind=4), allocatable :: s, pattern
+        character(len=100, kind=4), dimension(:), allocatable :: array
+        integer :: num, len_of_pattern, x1, x2, len_of_array, num2, i, alloc, array_num
+        logical :: patternMatch
+        character(len=:), allocatable :: temp_s
+
+        !! Because of the easier syntax check, it's not the same as classic regex!
+        !! \d = digit
+        !! \c = character
+        !! \s = space
+        !! \t = tab
+        !! \n = newline
+        !! \r = return
+        !! \\ = backslash
+        !! \? = anything
+
+        len_of_pattern = 0
+        len_of_array=0
+        num=1
+
+        do while (num<=len(pattern))
+            if (pattern(num:num)==toKind4("\")) then
+                if (pattern(num:num)==toKind4("\") .AND. num<len(pattern)) then
+                    if (pattern(num+1:num+1)==toKind4("d")&
+                    & .OR. pattern(num+1:num+1)==toKind4("c")&
+                    & .OR. pattern(num+1:num+1)==toKind4("s")&
+                    & .OR. pattern(num+1:num+1)==toKind4("t")&
+                    & .OR. pattern(num+1:num+1)==toKind4("n")&
+                    & .OR. pattern(num+1:num+1)==toKind4("r")&
+                    & .OR. pattern(num+1:num+1)==toKind4("\")&
+                    & .OR. pattern(num+1:num+1)==toKind4("?")) num=num+1
+
+                end if
+
+            end if
+            num=num+1
+            len_of_pattern = len_of_pattern+1
+
+        end do
+
+        array_num=1
+
+        do i=1, 2, 1
+            do x1 = 1, len(s)-len_of_pattern+1, 1
+                x2=x1+len_of_pattern
+                temp_s = s(x1:x2-1)
+                patternMatch = .TRUE.
+                num=1
+                num2=1
+                do while (num<=len(pattern))
+                    if (pattern(num:num)==toKind4("\") .AND. num<len(pattern)) then
+                        num=num+1
+
+
+                        if (pattern(num:num)==toKind4("d")) then
+                            if (ichar(temp_s(num2:num2))<48 .OR. ichar(temp_s(num2:num2))>57) patternMatch=.FALSE.
+
+                        else if (pattern(num:num)==toKind4("c")) then
+                            if (ichar(temp_s(num2:num2))<65 .OR. ichar(temp_s(num2:num2))>90 .AND.&
+                            & ichar(temp_s(num2:num2))<97 .OR. ichar(temp_s(num2:num2))>122) patternMatch=.FALSE.
+
+                        else if (pattern(num:num)==toKind4("s")) then
+                            if (ichar(temp_s(num2:num2))/=32) patternMatch=.FALSE.
+
+                        else if (pattern(num:num)==toKind4("t")) then
+                            if (ichar(temp_s(num2:num2))/=9) patternMatch=.FALSE.
+
+                        else if (pattern(num:num)==toKind4("n")) then
+                            if (ichar(temp_s(num2:num2))/=10) patternMatch=.FALSE.
+
+                        else if (pattern(num:num)==toKind4("r")) then
+                            if (ichar(temp_s(num2:num2))/=13) patternMatch=.FALSE.
+
+                        else if (pattern(num:num)==toKind4("\")) then
+                            if (ichar(temp_s(num2:num2))/=92) patternMatch=.FALSE.
+
+                        else if (pattern(num:num)==toKind4("?")) then
+                            !! Do nothing
+                        else
+                            patternMatch=.FALSE.
+                        end if
+                    else
+                        if (pattern(num:num)/=toKind4(temp_s(num2:num2))) patternMatch=.FALSE.
+                    end if
+                    num=num+1
+                    num2=num2+1
+                    if (patternMatch .EQV. .FALSE.) exit
+                end do
+
+                if (patternMatch .EQV. .TRUE.) then
+                    if (i==1) then
+                        len_of_array = len_of_array+1
+                    else
+
+                        array(array_num) = temp_s
+                        array_num=array_num+1
+                    end if
+                end if
+            end do
+            if (.NOT. allocated(array)) allocate(array(len_of_array), stat=alloc)
+
+        end do
+
+    end function
+
+    function sort(array_in, i) result(array_out)
+        integer :: i
+        character(len=i, kind=4), dimension(:), allocatable :: array_in
+        character(len=i, kind=4), dimension(:), allocatable :: array_out
+        integer :: alloc, start, ind, num, modified, charindex, charvalue
+        character(len=i, kind=4) :: temp, temp2
+
+        allocate(array_out(size(array_in)), stat=alloc)
+        array_out = array_in
+
+        start=1
+        do while (start<=size(array_out))
+            ind=start
+            temp=""
+            charindex=9999
+            do num = start, size(array_out), 1
+
+                if (ichar(array_out(num)(1:1))>64 .AND. ichar(array_out(num)(1:1))<91) then
+                    charvalue = ichar(array_out(num)(1:1))-55
+                else if (ichar(array_out(num)(1:1))>96 .AND. ichar(array_out(num)(1:1))<123) then
+                    charvalue = ichar(array_out(num)(1:1))-87
+                else if (ichar(array_out(num)(1:1))>47 .AND. ichar(array_out(num)(1:1))<58) then
+                    charvalue = ichar(array_out(num)(1:1))-48
+                else
+                    charvalue = ichar(array_out(num)(1:1))+60
+
+                end if
+
+                if (charvalue<charindex) then
+                    charindex=charvalue
+                    ind = num
+                    temp= array_out(num)
+
+                end if
+            end do
+
+            if (ind/=start) then
+                temp2 = array_out(start)
+                array_out(start) = temp
+                array_out(ind) = temp2
+            end if
+            start=start+1
+        end do
+    end function
+
+    function charToInt(c) result(i)
+        character(len=*) :: c
+        integer :: i
+
+        read(c, *) i
+
+    end function
+
+    function intToChar(i) result(c)
+        character(len=100) :: c_temp
+        character(len=:), allocatable :: c
+        integer :: i
+
+        write(c_temp, "(I0)") i
+        c = trim(c_temp)
+
+    end function
+
+end module
