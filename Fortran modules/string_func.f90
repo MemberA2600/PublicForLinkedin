@@ -52,7 +52,7 @@ module string_func
 
     function split(string, deliminator, maximum) result(temp_array)
         character(len=*, kind=4) :: string, deliminator
-        character(len=100, kind=4), dimension(:), allocatable :: temp_array
+        character(len=len(string), kind=4), dimension(:), allocatable :: temp_array
         integer :: num, x1, x2, alloc_stat, maximum, PrevPoint, delay
 
         num = 1
@@ -132,9 +132,9 @@ module string_func
     end function
 
     function findAll(s, pattern) result(array)
-        character(len=:, kind=4), allocatable :: s, pattern
-        character(len=100, kind=4), dimension(:), allocatable :: array
         integer :: num, len_of_pattern, x1, x2, len_of_array, num2, i, alloc, array_num
+        character(len=:, kind=4), allocatable :: s, pattern
+        character(len=len(pattern), kind=4), dimension(:), allocatable :: array
         logical :: patternMatch
         character(len=:), allocatable :: temp_s
 
@@ -299,5 +299,15 @@ module string_func
         c = trim(c_temp)
 
     end function
+
+end module
+
+module list
+    !Type List
+
+    !End Type
+
+    !contains
+
 
 end module
