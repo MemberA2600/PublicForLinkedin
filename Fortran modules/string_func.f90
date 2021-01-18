@@ -251,7 +251,7 @@ module string_func
         do while (start<=size(array_out))
             ind=start
             temp=""
-            charindex=9999
+            charindex=2147483647
             do num = start, size(array_out), 1
 
                 if (ichar(array_out(num)(1:1))>64 .AND. ichar(array_out(num)(1:1))<91) then
