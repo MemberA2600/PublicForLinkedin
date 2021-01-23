@@ -4,6 +4,7 @@ module list
     private
     public :: Charlist, Constructor, Add, Get, GetAll, Insert, RemoveByNum, RemoveByName, getLocation, ContainsItem
     public :: sorter, GetSize, setter, Occurrences, RemoveDuplicates, GetAsIntegers, GetAsReals, RemoveNaN, Kind4, Kind1
+    public :: Real2Char, Char2Real, Char2Int, Int2Char
 
     type CharList
         private
@@ -12,26 +13,33 @@ module list
         integer :: lenght, alloc_stat, insertLoc, longest
         logical :: secondIsTheMain
 
+        !Uses kind4 type of strings, so you have to do conversion before manipulation! All the strings are given
+        !back with the lenght of the longest one.
+
         contains
-            procedure :: create => Constructor
-            procedure :: add => Add
-            procedure :: get => Get
-            procedure :: getAll => GetAll
-            procedure :: insert => Insert
-            procedure :: removeByNum => RemoveByNUm
-            procedure :: removeByName => RemoveByName
-            procedure :: indexOf => getLocation
-            procedure :: containsItem => ContainsItem
-            procedure :: sort => sorter
-            procedure :: getSize => GetSize
-            procedure :: set => setter
-            procedure :: occurrences => Occurrences
-            procedure :: RemoveDuplicates
-            procedure :: getAsIntegers => GetAsIntegers
-            procedure :: getAsReals => GetAsReals
-            procedure :: removeNaN => RemoveNaN
-            procedure :: kind4=>Kind4
-            procedure :: kind1=>Kind1
+            procedure :: create => Constructor             !You have to call this without arguments to finnish creation.
+            procedure :: add => Add                        !Add a kind4 to the end of the list, only add string as argument.
+            procedure :: get => Get                        !Give you the value stored at the nth place of the List.
+            procedure :: getAll => GetAll                  !Give you all the content of the List as an array, with the len of the longest.
+            procedure :: insert => Insert                  !Inserts a string to the given position. Have to add string and position.
+            procedure :: removeByNum => RemoveByNum        !Removes string from given position.
+            procedure :: removeByName => RemoveByName      !Removes first occurrence of string from List.
+            procedure :: indexOf => getLocation            !Returns first occurence location of a given string
+            procedure :: containsItem => ContainsItem      !Returns if List contains a string.
+            procedure :: sort => sorter                    !Sorts List by alphabetic order.
+            procedure :: getSize => GetSize                !Returns size of List, only the taken positions.
+            procedure :: set => setter                     !Sets a position, string and position has to be added.
+            procedure :: occurrences => Occurrences        !Returns how many times gives string occurrences in List.
+            procedure :: RemoveDuplicates                  !Removes duplicates from List.
+            procedure :: getAsIntegers => GetAsIntegers    !Returns the content of List as array of integers. Have to remove NaN! Real >> Int is done. Add .FALSE. for unsorted and .TRUE. for sorted array.
+            procedure :: getAsReals => GetAsReals          !Returns the content of List as array of reals. Add .FALSE. for unsorted and .TRUE. for sorted array.
+            procedure :: removeNaN => RemoveNaN            !Removes not number items.
+            procedure :: kind4=>Kind4                      !Converts kind1 string to kind4 (not affecting List!)
+            procedure :: kind1=>Kind1                      !Converts kind4 string to kind1 (not affecting List!)
+            procedure :: real2Char => Real2Char            !Converts real to kind4 char! (not affecting List!)
+            procedure :: char2Real=>Char2Real              !Converts kind4 char to real with 4 decimansl! (not affecting List!)
+            procedure :: int2Char=>Int2Char                !Converts int to kind4 char! (not affecting List!)
+            procedure :: char2Int=>Char2Int                !Converts kind4 char to int! (not affecting List!)
     end type
 
     contains
@@ -484,5 +492,46 @@ module list
         character(len=:, kind=1), allocatable :: s2
         s2=s
     end function
+
+    function Char2Int(this, c) result(i)
+        class(CharList), intent(inout) :: this
+        character(len=*, kind=4) :: c
+        integer :: i
+
+        read(c, *) i
+
+    end function
+
+    function Int2Char(this, i) result(c)
+        class(CharList), intent(inout) :: this
+        character(len=1000, kind=4) :: c_temp
+        character(len=:, kind=4), allocatable :: c
+        integer :: i
+
+        write(c_temp, "(I0)") i
+        c = trim(c_temp)
+
+    end function
+
+        function Char2Real(this, c) result(r)
+        class(CharList), intent(inout) :: this
+        character(len=*, kind=4) :: c
+        real :: r
+
+        read(c, *) r
+
+    end function
+
+    function Real2Char(this, r) result(c)
+        class(CharList), intent(inout) :: this
+        character(len=1000, kind=4) :: c_temp
+        character(len=:, kind=4), allocatable :: c
+        real :: r
+
+        write(c_temp, "(F0.10)") r
+        c = trim(c_temp)
+
+    end function
+
 
 end module
