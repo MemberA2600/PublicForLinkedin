@@ -1,11 +1,6 @@
 module string_func
-    implicit none
 
-    !type Array
-    !    character(len=:), dimension(:), allocatable :: array
-    !    integer :: charLen, arrayLen
-    !
-    !end type
+    implicit none
 
     contains
 
@@ -291,7 +286,7 @@ module string_func
     end function
 
     function intToChar(i) result(c)
-        character(len=100) :: c_temp
+        character(len=1000) :: c_temp
         character(len=:), allocatable :: c
         integer :: i
 
@@ -299,15 +294,4 @@ module string_func
         c = trim(c_temp)
 
     end function
-
-end module
-
-module list
-    !Type List
-
-    !End Type
-
-    !contains
-
-
 end module
