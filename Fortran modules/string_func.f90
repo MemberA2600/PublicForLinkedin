@@ -5,8 +5,8 @@ module string_func
     contains
 
     function string_replace(string, original, new) result(new_string)
-        character(LEN=*, kind=4) :: string, original, new
-        character(LEN=len(string)+len(new), kind=4) :: new_string
+        character(LEN=*, kind=1) :: string, original, new
+        character(LEN=len(string)+len(new), kind=1) :: new_string
         integer :: x1, x2
         logical :: found_it
 
@@ -28,7 +28,7 @@ module string_func
     end function
 
     function startswith(string, start) result(isIt)
-        character(len=*, kind=4) string, start
+        character(len=*, kind=1) string, start
         logical :: isIt
 
         isIt = .FALSE.
@@ -37,7 +37,7 @@ module string_func
     end function
 
     function endswith(string, ender) result(isIt)
-        character(len=*, kind=4) string, ender
+        character(len=*, kind=1) string, ender
         logical :: isIt
 
         isIt = .FALSE.
@@ -46,8 +46,8 @@ module string_func
     end function
 
     function split(string, deliminator, maximum) result(temp_array)
-        character(len=*, kind=4) :: string, deliminator
-        character(len=len(string), kind=4), dimension(:), allocatable :: temp_array
+        character(len=*, kind=1) :: string, deliminator
+        character(len=len(string), kind=1), dimension(:), allocatable :: temp_array
         integer :: num, x1, x2, alloc_stat, maximum, PrevPoint, delay
 
         num = 1
@@ -86,21 +86,10 @@ module string_func
 
     end function
 
-    function toKind4(s) result(s2)
-        character(len=*, kind=1) :: s
-        character(len=:, kind=4), allocatable :: s2
-        s2=s
-    end function
-
-    function toKind1(s) result(s2)
-        character(len=*, kind=4) :: s
-        character(len=:, kind=1), allocatable :: s2
-        s2=s
-    end function
 
     function upper(s) result(s2)
-        character(len=*, kind=4) :: s
-        character(len=:, kind=4), allocatable :: s2
+        character(len=*, kind=1) :: s
+        character(len=:, kind=1), allocatable :: s2
         integer :: num
 
         s2=s
@@ -113,8 +102,8 @@ module string_func
     end function
 
     function lower(s) result(s2)
-        character(len=*, kind=4) :: s
-        character(len=:, kind=4), allocatable :: s2
+        character(len=*, kind=1) :: s
+        character(len=:, kind=1), allocatable :: s2
         integer :: num
 
         s2=s
@@ -128,8 +117,8 @@ module string_func
 
     function findAll(s, pattern) result(array)
         integer :: num, len_of_pattern, x1, x2, len_of_array, num2, i, alloc, array_num
-        character(len=:, kind=4), allocatable :: s, pattern
-        character(len=len(pattern), kind=4), dimension(:), allocatable :: array
+        character(len=:, kind=1), allocatable :: s, pattern
+        character(len=len(pattern), kind=1), dimension(:), allocatable :: array
         logical :: patternMatch
         character(len=:), allocatable :: temp_s
 
@@ -148,16 +137,16 @@ module string_func
         num=1
 
         do while (num<=len(pattern))
-            if (pattern(num:num)==toKind4("\")) then
-                if (pattern(num:num)==toKind4("\") .AND. num<len(pattern)) then
-                    if (pattern(num+1:num+1)==toKind4("d")&
-                    & .OR. pattern(num+1:num+1)==toKind4("c")&
-                    & .OR. pattern(num+1:num+1)==toKind4("s")&
-                    & .OR. pattern(num+1:num+1)==toKind4("t")&
-                    & .OR. pattern(num+1:num+1)==toKind4("n")&
-                    & .OR. pattern(num+1:num+1)==toKind4("r")&
-                    & .OR. pattern(num+1:num+1)==toKind4("\")&
-                    & .OR. pattern(num+1:num+1)==toKind4("?")) num=num+1
+            if (pattern(num:num)=="\") then
+                if (pattern(num:num)=="\" .AND. num<len(pattern)) then
+                    if (pattern(num+1:num+1)=="d"&
+                    & .OR. pattern(num+1:num+1)=="c"&
+                    & .OR. pattern(num+1:num+1)=="s"&
+                    & .OR. pattern(num+1:num+1)=="t"&
+                    & .OR. pattern(num+1:num+1)=="n"&
+                    & .OR. pattern(num+1:num+1)=="r"&
+                    & .OR. pattern(num+1:num+1)=="\"&
+                    & .OR. pattern(num+1:num+1)=="?") num=num+1
 
                 end if
 
@@ -177,39 +166,39 @@ module string_func
                 num=1
                 num2=1
                 do while (num<=len(pattern))
-                    if (pattern(num:num)==toKind4("\") .AND. num<len(pattern)) then
+                    if (pattern(num:num)=="\" .AND. num<len(pattern)) then
                         num=num+1
 
 
-                        if (pattern(num:num)==toKind4("d")) then
+                        if (pattern(num:num)=="d") then
                             if (ichar(temp_s(num2:num2))<48 .OR. ichar(temp_s(num2:num2))>57) patternMatch=.FALSE.
 
-                        else if (pattern(num:num)==toKind4("c")) then
+                        else if (pattern(num:num)=="c") then
                             if (ichar(temp_s(num2:num2))<65 .OR. ichar(temp_s(num2:num2))>90 .AND.&
                             & ichar(temp_s(num2:num2))<97 .OR. ichar(temp_s(num2:num2))>122) patternMatch=.FALSE.
 
-                        else if (pattern(num:num)==toKind4("s")) then
+                        else if (pattern(num:num)=="s") then
                             if (ichar(temp_s(num2:num2))/=32) patternMatch=.FALSE.
 
-                        else if (pattern(num:num)==toKind4("t")) then
+                        else if (pattern(num:num)=="t") then
                             if (ichar(temp_s(num2:num2))/=9) patternMatch=.FALSE.
 
-                        else if (pattern(num:num)==toKind4("n")) then
+                        else if (pattern(num:num)=="n") then
                             if (ichar(temp_s(num2:num2))/=10) patternMatch=.FALSE.
 
-                        else if (pattern(num:num)==toKind4("r")) then
+                        else if (pattern(num:num)=="r") then
                             if (ichar(temp_s(num2:num2))/=13) patternMatch=.FALSE.
 
-                        else if (pattern(num:num)==toKind4("\")) then
+                        else if (pattern(num:num)=="\") then
                             if (ichar(temp_s(num2:num2))/=92) patternMatch=.FALSE.
 
-                        else if (pattern(num:num)==toKind4("?")) then
+                        else if (pattern(num:num)=="?") then
                             !! Do nothing
                         else
                             patternMatch=.FALSE.
                         end if
                     else
-                        if (pattern(num:num)/=toKind4(temp_s(num2:num2))) patternMatch=.FALSE.
+                        if (pattern(num:num)/=temp_s(num2:num2)) patternMatch=.FALSE.
                     end if
                     num=num+1
                     num2=num2+1
@@ -234,10 +223,10 @@ module string_func
 
     function sort(array_in, i) result(array_out)
         integer :: i
-        character(len=i, kind=4), dimension(:), allocatable :: array_in
-        character(len=i, kind=4), dimension(:), allocatable :: array_out
+        character(len=i, kind=1), dimension(:), allocatable :: array_in
+        character(len=i, kind=1), dimension(:), allocatable :: array_out
         integer :: alloc, start, ind, num, modified, charindex, charvalue
-        character(len=i, kind=4) :: temp, temp2
+        character(len=i, kind=1) :: temp, temp2
 
         allocate(array_out(size(array_in)), stat=alloc)
         array_out = array_in
@@ -286,7 +275,7 @@ module string_func
     end function
 
     function intToChar(i) result(c)
-        character(len=1000) :: c_temp
+        character(len=10000) :: c_temp
         character(len=:), allocatable :: c
         integer :: i
 

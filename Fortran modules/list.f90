@@ -3,22 +3,21 @@ module list
 
     private
     public :: Charlist, Constructor, Add, Get, GetAll, Insert, RemoveByNum, RemoveByName, getLocation, ContainsItem
-    public :: sorter, GetSize, setter, Occurrences, RemoveDuplicates, GetAsIntegers, GetAsReals, RemoveNaN, Kind4, Kind1
+    public :: sorter, GetSize, setter, Occurrences, RemoveDuplicates, GetAsIntegers, GetAsReals, RemoveNaN
     public :: Real2Char, Char2Real, Char2Int, Int2Char
 
     type CharList
         private
-        character(len=1000, kind=4), dimension(:), allocatable :: list1
-        character(len=1000, kind=4), dimension(:), allocatable :: list2
+        character(len=10000, kind=1), dimension(:), allocatable :: list1
+        character(len=10000, kind=1), dimension(:), allocatable :: list2
         integer :: lenght, alloc_stat, insertLoc, longest
         logical :: secondIsTheMain
 
-        !Uses kind4 type of strings, so you have to do conversion before manipulation! All the strings are given
-        !back with the lenght of the longest one.
+        !All the strings are given back with the lenght of the longest one.
 
         contains
             procedure :: create => Constructor             !You have to call this without arguments to finnish creation.
-            procedure :: add => Add                        !Add a kind4 to the end of the list, only add string as argument.
+            procedure :: add => Add                        !Add a string to the end of the list, only add string as argument.
             procedure :: get => Get                        !Give you the value stored at the nth place of the List.
             procedure :: getAll => GetAll                  !Give you all the content of the List as an array, with the len of the longest.
             procedure :: insert => Insert                  !Inserts a string to the given position. Have to add string and position.
@@ -34,12 +33,10 @@ module list
             procedure :: getAsIntegers => GetAsIntegers    !Returns the content of List as array of integers. Have to remove NaN! Real >> Int is done. Add .FALSE. for unsorted and .TRUE. for sorted array.
             procedure :: getAsReals => GetAsReals          !Returns the content of List as array of reals. Add .FALSE. for unsorted and .TRUE. for sorted array.
             procedure :: removeNaN => RemoveNaN            !Removes not number items.
-            procedure :: kind4=>Kind4                      !Converts kind1 string to kind4 (not affecting List!)
-            procedure :: kind1=>Kind1                      !Converts kind4 string to kind1 (not affecting List!)
-            procedure :: real2Char => Real2Char            !Converts real to kind4 char! (not affecting List!)
-            procedure :: char2Real=>Char2Real              !Converts kind4 char to real with 4 decimansl! (not affecting List!)
-            procedure :: int2Char=>Int2Char                !Converts int to kind4 char! (not affecting List!)
-            procedure :: char2Int=>Char2Int                !Converts kind4 char to int! (not affecting List!)
+            procedure :: real2Char => Real2Char            !Converts real to char! (not affecting List!)
+            procedure :: char2Real=>Char2Real              !Converts char to real with 4 decimansl! (not affecting List!)
+            procedure :: int2Char=>Int2Char                !Converts int to char! (not affecting List!)
+            procedure :: char2Int=>Char2Int                !Converts char to int! (not affecting List!)
     end type
 
     contains
@@ -57,7 +54,7 @@ module list
 
         subroutine Add(this, value)
             class(CharList), intent(inout) :: this
-            character(len=:, kind=4), allocatable :: value
+            character(len=:, kind=1), allocatable :: value
 
             if (this%insertLoc == this%lenght) call doubleTheSize(this)
 
@@ -100,7 +97,7 @@ module list
         function Get(this, num) result(item)
             class(CharList) :: this
             integer :: num
-            character(len=:, kind=4), allocatable :: item
+            character(len=:, kind=1), allocatable :: item
 
             if (this%secondIsTheMain.EQV..FALSE.) then
                 item = trim(this%list1(num))
@@ -113,7 +110,7 @@ module list
         function GetAll(this) result(array)
             class(CharList) :: this
             integer :: alloc_stat
-            character(len=this%longest, kind=4), dimension(:), allocatable :: array
+            character(len=this%longest, kind=1), dimension(:), allocatable :: array
 
             allocate(array(this%insertLoc), stat=alloc_stat)
 
@@ -126,7 +123,7 @@ module list
 
         subroutine Insert(this, value, location)
             class(CharList), intent(inout) :: this
-            character(len=:, kind=4), allocatable :: value
+            character(len=:, kind=1), allocatable :: value
             integer :: location
 
             if (this%insertLoc == this%lenght) call doubleTheSize(this)
@@ -180,7 +177,7 @@ module list
 
     subroutine RemoveByName(this, value)
         class(CharList), intent(inout) :: this
-        character(len=:, kind=4), allocatable :: value
+        character(len=:, kind=1), allocatable :: value
         integer :: X
 
         X = getLocation(this, value)
@@ -191,7 +188,7 @@ module list
 
     function getLocation(this, value) result(X)
         class(CharList), intent(inout) :: this
-        character(len=:, kind=4), allocatable :: value
+        character(len=:, kind=1), allocatable :: value
         integer :: X, num
 
         X = 0
@@ -214,7 +211,7 @@ module list
 
     function ContainsItem(this, value) result(con)
         class(CharList), intent(inout) :: this
-        character(len=:, kind=4), allocatable :: value
+        character(len=:, kind=1), allocatable :: value
         logical :: con
 
         if (getLocation(this, value)/=0) then
@@ -228,7 +225,7 @@ module list
     subroutine sorter(this)
         class(CharList), intent(inout) :: this
         integer :: alloc, start, ind, num, modified, charindex, charvalue
-        character(len=this%longest, kind=4) :: temp, temp2
+        character(len=this%longest, kind=1) :: temp, temp2
 
         if (this%secondIsTheMain.EQV..TRUE.) then
             start=1
@@ -303,7 +300,7 @@ module list
 
     subroutine setter(this, value, num)
         class(CharList), intent(inout) :: this
-        character(len=:, kind=4), allocatable :: value
+        character(len=:, kind=1), allocatable :: value
         integer :: num
 
         if (this%secondIsTheMain.EQV..TRUE.) then
@@ -326,7 +323,7 @@ module list
     function Occurrences(this, value) result(o)
         class(CharList), intent(inout) :: this
         integer :: o, num
-        character(len=:, kind=4), allocatable :: value
+        character(len=:, kind=1), allocatable :: value
 
         o=0
 
@@ -364,7 +361,7 @@ module list
         class(CharList), intent(inout) :: this
         integer, dimension(this%insertLoc-1) :: array
         integer :: num, ind, start, itemp, itemp2, charnum
-        character(len=this%longest, kind=4) :: temp
+        character(len=this%longest, kind=1) :: temp
         logical :: sort, isReal
         real :: tempreal
 
@@ -373,11 +370,11 @@ module list
         do num=1, this%insertLoc-1, 1
             temp=this%get(num)
             do charnum=1, len(temp), 1
-                if (temp(charnum:charnum)==this%kind4(".")) isReal = .TRUE.
+                if (temp(charnum:charnum)==".") isReal = .TRUE.
             end do
             do charnum=1, len(temp), 1
                 if ((ichar(temp(charnum:charnum))<48 .OR. ichar(temp(charnum:charnum))>57)&
-                &.AND. temp(charnum:charnum)/=this%kind4(".")) isReal = .FALSE.
+                &.AND. temp(charnum:charnum)/=".") isReal = .FALSE.
             end do
             if (isReal .EQV. .TRUE.) then
                 read(temp, *) tempreal
@@ -419,7 +416,7 @@ module list
         real, dimension(this%insertLoc-1) :: array
         integer :: num, ind, start
         real :: itemp, itemp2
-        character(len=this%longest, kind=4) :: temp
+        character(len=this%longest, kind=1) :: temp
         logical :: sort
 
         do num=1, this%insertLoc-1, 1
@@ -455,7 +452,7 @@ module list
         class(CharList), intent(inout) :: this
         logical NaN
         integer :: num, charnum
-        character(len=this%longest, kind=4) :: temp
+        character(len=this%longest, kind=1) :: temp
 
         NaN = .TRUE.
         num = 1
@@ -466,7 +463,7 @@ module list
             end do
             do charnum = 1, len_trim(temp), 1
             if ((ichar(temp(charnum:charnum))<48 .OR. ichar(temp(charnum:charnum))>57)&
-                &.AND. temp(charnum:charnum)/=this%kind4(".")) NaN = .TRUE.
+                &.AND. temp(charnum:charnum)/=".") NaN = .TRUE.
             end do
 
             if (NaN .EQV. .TRUE.) then
@@ -479,23 +476,9 @@ module list
 
     end subroutine
 
-    function Kind4(this, s) result(s2)
-        class(CharList), intent(inout) :: this
-        character(len=*, kind=1) :: s
-        character(len=:, kind=4), allocatable :: s2
-        s2=s
-    end function
-
-    function Kind1(this, s) result(s2)
-        class(CharList), intent(inout) :: this
-        character(len=*, kind=4) :: s
-        character(len=:, kind=1), allocatable :: s2
-        s2=s
-    end function
-
     function Char2Int(this, c) result(i)
         class(CharList), intent(inout) :: this
-        character(len=*, kind=4) :: c
+        character(len=*, kind=1) :: c
         integer :: i
 
         read(c, *) i
@@ -504,8 +487,8 @@ module list
 
     function Int2Char(this, i) result(c)
         class(CharList), intent(inout) :: this
-        character(len=1000, kind=4) :: c_temp
-        character(len=:, kind=4), allocatable :: c
+        character(len=10000, kind=1) :: c_temp
+        character(len=:, kind=1), allocatable :: c
         integer :: i
 
         write(c_temp, "(I0)") i
@@ -515,7 +498,7 @@ module list
 
         function Char2Real(this, c) result(r)
         class(CharList), intent(inout) :: this
-        character(len=*, kind=4) :: c
+        character(len=*, kind=1) :: c
         real :: r
 
         read(c, *) r
@@ -524,8 +507,8 @@ module list
 
     function Real2Char(this, r) result(c)
         class(CharList), intent(inout) :: this
-        character(len=1000, kind=4) :: c_temp
-        character(len=:, kind=4), allocatable :: c
+        character(len=10000, kind=1) :: c_temp
+        character(len=:, kind=1), allocatable :: c
         real :: r
 
         write(c_temp, "(F0.10)") r
