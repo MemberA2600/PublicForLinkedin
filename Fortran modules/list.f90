@@ -115,9 +115,9 @@ module list
             allocate(array(this%insertLoc), stat=alloc_stat)
 
             if (this%secondIsTheMain.EQV..TRUE.) then
-                array = this%list2(1:this%insertLoc)
+                array = this%list2(1:this%insertLoc-1)
             else
-                array = this%list1(1:this%insertLoc)
+                array = this%list1(1:this%insertLoc-1)
             end if
         end function
 

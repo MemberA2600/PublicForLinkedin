@@ -53,7 +53,7 @@ module file_func
         character(len=:), allocatable :: temp
 
         open(UNIT=11, FILE=path, iostat=io, STATUS="old", action="read")
-        lineNumber=0
+        lineNumber=1
         do
             read(11,"(A)", iostat=io) temp
             if (io/=0) exit
