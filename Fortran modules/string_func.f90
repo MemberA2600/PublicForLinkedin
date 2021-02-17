@@ -86,6 +86,65 @@ module string_func
 
     end function
 
+    function splitBySpaces(string, maximum) result(temp_array)
+        character(:), allocatable :: string
+        integer :: maximum, x1, x2, num, theSize, wordNum, alloc
+        character(10000), dimension(:), allocatable :: temp_array
+        logical :: newWord
+
+        newWord = .TRUE.
+        x1 = 1
+        x2 = 1
+        theSize = 0
+
+        do num = 1, len(string), 1
+            if (string(num:num) == " ") then
+                if (newWord .EQV. .FALSE.) then
+                    theSize = theSize +1
+                end if
+                newWord = .TRUE.
+            else
+                if (newWord .EQV. .TRUE.) then
+                    x1 = num
+                    x2 = num
+                    newWord = .FALSE.
+                else
+                    x2 = num
+                end if
+            end if
+        end do
+
+        newWord = .TRUE.
+        x1 = 1
+        x2 = 1
+        wordNum = 1
+
+        if (theSize>maximum) theSize = maximum
+        allocate(temp_array(theSize), stat=alloc)
+
+        do num = 1, len(string), 1
+            if (string(num:num) == " ") then
+                if (newWord .EQV. .FALSE.) then
+                    if (wordNum<theSize) then
+                        temp_array(wordNum) = trim(string(x1:x2))
+                        wordNum = wordNum +1
+                    else
+                        temp_array(wordNum) = trim(string(x1:len(string)))
+                        exit
+                    end if
+                end if
+                newWord = .TRUE.
+            else
+                if (newWord .EQV. .TRUE.) then
+                    x1 = num
+                    x2 = num
+                    newWord = .FALSE.
+                else
+                    x2 = num
+                end if
+            end if
+        end do
+    end function
 
     function upper(s) result(s2)
         character(len=*, kind=1) :: s
@@ -283,4 +342,67 @@ module string_func
         c = trim(c_temp)
 
     end function
+
+    function charToReal(c) result(r)
+        character(len=*) :: c
+        real :: r
+
+        read(c, *) r
+
+    end function
+
+    function realToChar(r) result(c)
+        character(len=10000) :: c_temp
+        character(len=:), allocatable :: c
+        real :: r
+        integer :: num
+
+        write(c_temp, "(F0.12)") r
+        if (c_temp(1:1) == ".") c_temp = "0"//c_temp
+        do num = len_trim(c_temp), 1, -1
+            if (c_temp(num:num) == "0") c_temp(num:num) = " "
+            if (c_temp(num:num) == ".") exit
+        end do
+
+        c = trim(c_temp)
+
+    end function
+
+
+    function arrayJoin(array, ch, start, ender) result(string)
+        character(10000), dimension(:), allocatable :: array
+        character(:), allocatable :: string, ch
+        integer :: num, start, ender, templinenum
+
+        !Creates a string from array, joining from start to ender with c between.
+
+        string = trim(array(start))
+
+        do num = start+1, ender, 1
+            string = string//ch//trim(array(num))
+
+        end do
+
+    end function
+
+    function removeBlankLinesFromArray(arrayIn) result(arrayOut)
+        character(10000), dimension(:), allocatable :: arrayIn, arrayOut
+        integer :: num, linenum, alloc
+
+        linenum = 0
+        do num=1, size(arrayIn), 1
+            if (len_trim(arrayIn(num))>0) linenum = linenum +1
+        end do
+
+        allocate(arrayOut(linenum), stat=alloc)
+        linenum = 1
+        do num=1, size(arrayIn), 1
+            if (len_trim(arrayIn(num))>0) then
+                arrayOut(linenum) = arrayIn(num)
+                linenum = linenum + 1
+            end if
+        end do
+
+    end function
+
 end module

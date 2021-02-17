@@ -2,7 +2,7 @@ module file_func
     implicit none
 
     private
-    public :: loadText, loadLines, saveLines, saveText
+    public :: loadText, loadLines, saveLines, saveText, arrayToText, textToArray, arrayToTextWithoutNewLines
 
     contains
 
@@ -77,6 +77,19 @@ module file_func
 
     end function
 
+    function arrayToTextWithoutNewLines(array) result(text)
+        character(len=:, kind=1), allocatable :: text
+        character(len=10000, kind=1), dimension(:), allocatable :: array
+        integer :: num
+
+        text=""
+
+        do num=1, size(array), 1
+            text = text//trim(array(num))
+
+        end do
+
+    end function
 
     subroutine saveLines(path, array)
         character(len=:, kind=1), allocatable :: path

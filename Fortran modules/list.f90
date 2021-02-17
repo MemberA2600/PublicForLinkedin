@@ -510,9 +510,14 @@ module list
         character(len=10000, kind=1) :: c_temp
         character(len=:, kind=1), allocatable :: c
         real :: r
+        integer :: num
 
-        write(c_temp, "(F0.10)") r
-        c = trim(c_temp)
+        write(c_temp, "(F0.12)") r
+        if (c_temp(1:1) == ".") c_temp = "0"//c_temp
+        do num = len_trim(c_temp), 1, -1
+            if (c_temp(num:num) == "0") c_temp(num:num) = " "
+            if (c_temp(num:num) == ".") exit
+        end do
 
     end function
 
