@@ -1,3 +1,6 @@
 [submodule "Boo-T"]
 	path = Boo-T
 	url = git@github.com:MemberA2600/Boo-T.git
+[submodule "Fortari2600"]
+	path = Fortari2600
+	url = git@github.com:MemberA2600/Fortari2600.git
