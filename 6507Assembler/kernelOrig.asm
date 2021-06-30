@@ -1,12 +1,5 @@
-*Init Section
-*---------------------------
-* This is were variables and
-* constants are asigned.
-*
-* This does not count into the
-* ROM space.
-*
-
+Init_Section
+	; Variables
 random = $80
 counter = $81
 temp01 = $82
@@ -72,26 +65,114 @@ P1Height = $b4
 P0SpriteIndex = $ae			; low nibble is P0 sprite index
 P1SpriteIndex = $ae			; high nibble is P1 sprite index
 
+pfLines = $98		; if 7th bit set, don't draw the game section
+bankToJump = $98		; use only bites 2-4 of $98
+			; 5-6 : FREE
+
+pfSettings = $b2		; Since CTRLPF 0-1 bits are fixed in the screen loop
+			; 0-1: free
+			; 2: Players move behind the pf
+			; 3: Free
+			; 4-5: Ball size
+			; 6: Free
+			; 7: PFColor / BGColor switch
+
+
+pf0Pointer = $99		; 16 bits
+
+		; p0 settings
+P0SpritePointer = $9b		; 16bit
+P0ColorPointer = $9d		; 16bit
+
+P0X	= $a0
+P0Y 	= $ab			
+P0Settings = $ac			; Bits 0-2 are sprite settings, 3 is reflection, bits 4-5 are missile settings. 
+P0Mirrored = $ac
+P0Height = $ad
+
+
+
+P0SpriteIndex = $ae			; low nibble is P0 sprite index
+P1SpriteIndex = $ae			; high nibble is P1 sprite index
 
 	; Constants 
-NTSCtimer = 161
-PALtimer = 221
+NTSCtimer = 163
+PALtimer = 223
 
-
-***************************
-********* Start of 1st bank
-***************************
-
-*Enter Bank
-*--------------------------
-* Bank1 contains the main
-* kernel and most game
-* data
-*
 
 	fill 256	; We have to prevent writing on addresses taken by the SuperChip RAM.
 
-EnterKernel
+StartTheROM
+
+SettingsForTesting
+
+	LDA	#<Mountain
+	STA 	pf0Pointer 
+	LDA	#>Mountain
+	STA 	pf0Pointer+1
+
+	LDA	#<Castle_01
+	STA 	pf1Pointer 
+	LDA	#>Castle_01
+	STA 	pf1Pointer+1
+
+	LDA	#<Castle_02
+	STA 	pf2Pointer 
+	LDA	#>Castle_02
+	STA 	pf2Pointer+1
+
+	LDA	#<Castle_Color
+	STA 	pfColorPointer 
+	LDA	#>Castle_Color
+	STA 	pfColorPointer+1
+
+	LDA	#3
+	STA	pfLines 
+
+	LDA	#0
+	STA	pfBaseColor
+
+	LDA	#<Dragon
+	STA	P0SpritePointer
+	LDA	#>Dragon
+	STA	P0SpritePointer+1
+	
+	LDA	#<DragonColors
+	STA	P0ColorPointer
+	LDA	#>DragonColors
+	STA	P0ColorPointer+1
+
+	LDA	#55
+	STA	P0X
+	
+	LDA	#13
+	STA	P0Y
+
+	LDA	#0
+	STA	P0SpriteIndex ; 	Sets both indexes to 0;
+	STA	pfIndex
+
+	LDA	#12
+	STA	P0Height
+
+	LDA	#<UFO
+	STA	P1SpritePointer
+	LDA	#>UFO
+	STA	P1SpritePointer+1
+
+	LDA	#8
+	STA	P1Height
+
+	LDA	#93
+	STA	P1X
+	
+	LDA	#28
+	STA	P1Y
+
+
+	; set this for static, we will see if we can add advanced colours.
+	LDA	#$0e
+	STA	COLUP1		
 
 ScreenLoop	; This is where the loop begins.
 WaitUntilOverScanTimerEnds
@@ -252,7 +333,7 @@ SetHMOVE
 
 FinishPreparation
 	LDA	pfLines
-	AND	#%00000011
+	AND	#%00001111
 	TAX
 	LDA	#0
 
@@ -620,46 +701,7 @@ MovedP0
 
 
 OverScanEnd
-
-	lda	bankToJump
-	lsr
-	lsr
-	AND	#%00000111	; Get the bank number to return
-	tax
-	
-	SEC
-	SBC	#2
-	STA	temp01		
-	CLC
-	ADC	temp01		; ([bankNum - 2] * 2 )
-	TAY			; Get the location of address from the table
-		
-		
-	lda	ScreenJumpTable,y
-   	pha
-   	lda	ScreenJumpTable+1,y
-   	pha
-   	pha
-   	pha
-   	jmp	bankSwitchJump
-
-ScreenJumpTable
-	.byte	#>ScreenBottomBank2-1
-	.byte	#<ScreenBottomBank2-1
-*	.byte	#>ScreenBottomBank3-1
-*	.byte	#<ScreenBottomBank3-1
-*	.byte	#>ScreenBottomBank4-1
-*	.byte	#<ScreenBottomBank4-1
-*	.byte	#>ScreenBottomBank5-1
-*	.byte	#<ScreenBottomBank5-1
-*	.byte	#>ScreenBottomBank6-1
-*	.byte	#<ScreenBottomBank6-1
-*	.byte	#>ScreenBottomBank7-1
-*	.byte	#<ScreenBottomBank7-1
-*	.byte	#>ScreenBottomBank8-1
-*	.byte	#<ScreenBottomBank8-1
-
-
+	JMP	ScreenLoop
 GetXPoz
 	STA	WSYNC	
 	SEC			;2 
@@ -675,17 +717,11 @@ DivideLoopX
 	STA	RESP0,x		; 4 (25)
 	rts			; 6 (31)
 
-*Data Section
-*-------------------------------
-* Contains graphics data for the
-* main kernel.
-
 Zero
 Null
 None
 	.BYTE	#0	; This is an empty byte for constant code usage.
 	align 256
-
 Data_Section
 
 Castle_01
@@ -1025,121 +1061,6 @@ start_bank1
 	Bank 2
 	fill	256
 	
-*Enter Bank
-*-----------------------------
-*
-* This is the section that happens
-* everytime you go to a new screen.
-* Should set the screen initialization
-* here.
-*
-
-EnterScreenBank2
-
-	LDA	#<Mountain
-	STA 	pf0Pointer 
-	LDA	#>Mountain
-	STA 	pf0Pointer+1
-
-	LDA	#<Castle_01
-	STA 	pf1Pointer 
-	LDA	#>Castle_01
-	STA 	pf1Pointer+1
-
-	LDA	#<Castle_02
-	STA 	pf2Pointer 
-	LDA	#>Castle_02
-	STA 	pf2Pointer+1
-
-	LDA	#<Castle_Color
-	STA 	pfColorPointer 
-	LDA	#>Castle_Color
-	STA 	pfColorPointer+1
-
-	LDA	#3
-	STA	pfLines 
-
-	LDA	#0
-	STA	pfBaseColor
-
-	LDA	#<Dragon
-	STA	P0SpritePointer
-	LDA	#>Dragon
-	STA	P0SpritePointer+1
-	
-	LDA	#<DragonColors
-	STA	P0ColorPointer
-	LDA	#>DragonColors
-	STA	P0ColorPointer+1
-
-	LDA	#55
-	STA	P0X
-	
-	LDA	#13
-	STA	P0Y
-
-	LDA	#0
-	STA	P0SpriteIndex ; 	Sets both indexes to 0;
-	STA	pfIndex
-
-	LDA	#12
-	STA	P0Height
-
-	LDA	#<UFO
-	STA	P1SpritePointer
-	LDA	#>UFO
-	STA	P1SpritePointer+1
-
-	LDA	#8
-	STA	P1Height
-
-	LDA	#93
-	STA	P1X
-	
-	LDA	#28
-	STA	P1Y
-
-
-	; set this for static, we will see if we can add advanced colours.
-	LDA	#$0e
-	STA	COLUP1		
-
-*JumpToMainKernel
-*---------------------------------
-* For this, the program go to main
-* kernel in bank1.
-
-ThisIsTemporal
-
-	LDA	#2
-	asl
-	asl			; Rol left two bits to save bankNumber
-	STA	temp01
-
-	LDA 	bankToJump
-	AND	#%11100011	; Clear previous bankNumber
-	ORA	temp01		; Save the bankNumber
-	STA	bankToJump
-
-	lda	#>(EnterKernel-1)
-   	pha
-   	lda	#<(EnterKernel-1)
-   	pha
-   	pha
-   	pha
-   	ldx	#1
-   	jmp	bankSwitchJump
-
-*ScreenBottom
-*--------------------------------  
-* This is the section for the
-* bottom part of the screen.
-*
-
-ScreenBottomBank2
-	JMP	ThisIsTemporal
-
-
 	saveFreeBytes
 	rewind 	2fd4
 	
@@ -1409,13 +1330,13 @@ ClearSCRAM
 	INY
 	BPL 	ClearSCRAM
 
-	lda	#>(EnterScreenBank2-1)
+	lda	#>(StartTheROM-1)
    	pha
-   	lda	#<(EnterScreenBank2-1)
+   	lda	#<(StartTheROM-1)
    	pha
    	pha
    	pha
-   	ldx	#2
+   	ldx	#1
    	jmp	bankSwitchJump
 
 	saveFreeBytes

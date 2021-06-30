@@ -13,19 +13,19 @@
   </component>
   <component name="CoverageDataManager">
     <SUITE FILE_PATH="coverage/6507Compiler$Boo_T.coverage" NAME="Boo-T Coverage Results" MODIFIED="1624336709196" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/../Boo-T/Boo-T" />
-    <SUITE FILE_PATH="coverage/6507Compiler$6507Compiler.coverage" NAME="6507Compiler Coverage Results" MODIFIED="1624850030214" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/6507Compiler$6507Compiler.coverage" NAME="6507Compiler Coverage Results" MODIFIED="1625031003706" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
   <component name="FUSProjectUsageTrigger">
     <session id="-1803221154">
       <usages-collector id="statistics.lifecycle.project">
         <counts>
-          <entry key="project.closed" value="6" />
+          <entry key="project.closed" value="8" />
           <entry key="project.open.time.0" value="1" />
-          <entry key="project.open.time.3" value="9" />
+          <entry key="project.open.time.3" value="12" />
           <entry key="project.open.time.4" value="1" />
           <entry key="project.open.time.5" value="1" />
           <entry key="project.open.time.9" value="1" />
-          <entry key="project.opened" value="13" />
+          <entry key="project.opened" value="16" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.open">
@@ -40,12 +40,12 @@
       </usages-collector>
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
-          <entry key="py" value="13886" />
+          <entry key="py" value="15733" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
-          <entry key="Python" value="13886" />
+          <entry key="Python" value="15733" />
         </counts>
       </usages-collector>
     </session>
@@ -58,14 +58,14 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/6507Compiler.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="209">
-              <caret line="499" column="58" selection-start-line="499" selection-start-column="58" selection-end-line="499" selection-end-column="58" />
+            <state relative-caret-position="178">
+              <caret line="237" selection-start-line="237" selection-end-line="237" />
               <folding>
-                <marker date="1624849534316" expanded="true" signature="10954:11021" ph="..." />
-                <marker date="1624849534316" expanded="true" signature="11060:11065" ph="..." />
-                <marker date="1624849534316" expanded="true" signature="11060:11251" ph="..." />
-                <marker date="1624849534316" expanded="true" signature="11284:12136" ph="..." />
-                <marker date="1624849534316" expanded="true" signature="13992:14004" ph="..." />
+                <marker date="1625028762832" expanded="true" signature="12658:12725" ph="..." />
+                <marker date="1625028762832" expanded="true" signature="12764:12769" ph="..." />
+                <marker date="1625028762832" expanded="true" signature="12764:12955" ph="..." />
+                <marker date="1625028762832" expanded="true" signature="12988:13840" ph="..." />
+                <marker date="1625028762832" expanded="true" signature="15696:15708" ph="..." />
               </folding>
             </state>
           </provider>
@@ -104,6 +104,10 @@
       <find>print</find>
       <find>lowhigh</find>
       <find>sections</find>
+      <find>for</find>
+      <find>shit</find>
+      <find>checkForTooDistant</find>
+      <find>.bytenum</find>
     </findStrings>
   </component>
   <component name="IdeDocumentHistory">
@@ -236,12 +240,12 @@
     <frame x="-4" y="-4" width="1608" height="1164" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.4943182" visible="true" weight="0.15789473" />
-      <window_info id="Structure" order="1" sideWeight="0.5056818" side_tool="true" visible="true" weight="0.15789473" />
+      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.49043977" visible="true" weight="0.16367137" />
+      <window_info id="Structure" order="1" sideWeight="0.5095602" side_tool="true" visible="true" weight="0.16367137" />
       <window_info id="Favorites" order="2" sideWeight="0.5007133" side_tool="true" weight="0.24967907" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" />
-      <window_info active="true" anchor="bottom" id="Run" order="2" visible="true" weight="0.32695985" />
+      <window_info anchor="bottom" id="Run" order="2" weight="0.32695985" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.39961758" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
@@ -282,14 +286,14 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/6507Compiler.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="209">
-          <caret line="499" column="58" selection-start-line="499" selection-start-column="58" selection-end-line="499" selection-end-column="58" />
+        <state relative-caret-position="178">
+          <caret line="237" selection-start-line="237" selection-end-line="237" />
           <folding>
-            <marker date="1624849534316" expanded="true" signature="10954:11021" ph="..." />
-            <marker date="1624849534316" expanded="true" signature="11060:11065" ph="..." />
-            <marker date="1624849534316" expanded="true" signature="11060:11251" ph="..." />
-            <marker date="1624849534316" expanded="true" signature="11284:12136" ph="..." />
-            <marker date="1624849534316" expanded="true" signature="13992:14004" ph="..." />
+            <marker date="1625028762832" expanded="true" signature="12658:12725" ph="..." />
+            <marker date="1625028762832" expanded="true" signature="12764:12769" ph="..." />
+            <marker date="1625028762832" expanded="true" signature="12764:12955" ph="..." />
+            <marker date="1625028762832" expanded="true" signature="12988:13840" ph="..." />
+            <marker date="1625028762832" expanded="true" signature="15696:15708" ph="..." />
           </folding>
         </state>
       </provider>

@@ -134,11 +134,13 @@ def createSquence(code, opcodes, variables, registers):
     from copy import deepcopy
     code = code.split("\n")
 
-    branchers = ["BCC", "BCS", "BEQ", "BMI", "BNE", "BPL", "BVC", "BVS"]
+    branchers = ["BCC", "BCS", "BEQ", "BNE", "BMI", "BPL", "BVC", "BVS"]
+
     sections = getSectionNames(code)
     codeLines = []
     freebytes = {}
     currentBank = 1
+    errorMessageId = 0
 
     currentSEQNumber = 1
     currentAddress = 4096
@@ -153,11 +155,11 @@ def createSquence(code, opcodes, variables, registers):
         if len(variables[v])>3:
             threeByters.append(v)
 
+    code = checkForTooDistant(code, branchers)
 
     for line in code:
         while line.endswith(" "):
             line = line[:-1]
-
 
         if (len(re.findall(r"[a-zA-Z]", line)) == 0) or ("=" in line):
             continue
@@ -228,24 +230,6 @@ def createSquence(code, opcodes, variables, registers):
                 currentSEQNumber += 1
                 current.raw = deepcopy(line)
 
-                try:
-                    num = line[1].replace("#", "")
-                    if "%" in num:
-                        num = int("0b"+num.replace("%", ""), 2)
-                    elif "$" in num:
-                        num = int("0x"+num.replace("$", ""), 16)
-                    else:
-                        num = int(num, 10)
-                    current.bytes.append(bytes([num]))
-                except Exception as e:
-
-                    second = checkIfSectionName(line[1], sections)
-                    second = starToAddress(currentAddress, second)
-                    second = secondByteToNumeric(second, variables, registers, sections)
-                    second = doTheMath(second)
-                    second = lowHighNibble(second)
-                    current.bytes.append(bytes([int(second.replace("#$", "0x"), 16)]))
-
             else:
                 codeLines.append(DataLine())
                 current = codeLines[-1]
@@ -258,14 +242,20 @@ def createSquence(code, opcodes, variables, registers):
                     currentAddress += 2
                     current.byteNum = 2
                 else:
+
+
+
                     line[1] = line[1].replace("*", str(currentAddress))
                     currentAddress += 2
                     current.byteNum = 2
-                    if ("#" not in line[1]) and (line[1] in list(sections.keys()) or
+
+
+                    if ("#" not in line[1]) and (line[1].split(",")[0].split("+")[0] in list(sections.keys()) or
                         len(re.findall(r'[a-fA-F0-9]{4}', line[1])) > 0 or
                         line[1] in threeByters):
                         currentAddress += 1
                         current.byteNum = 3
+
 
                 """
                 try:
@@ -280,16 +270,37 @@ def createSquence(code, opcodes, variables, registers):
     for line in codeLines:
         counter = 0
         second = ""
-        shit = False
+
+        if line.bytes != []:
+            continue
+
+        elif "BYTE" in line.raw[0].upper():
+
+            try:
+                num = line.raw[1].replace("#", "")
+                if "%" in num:
+                    num = int("0b" + num.replace("%", ""), 2)
+                elif "$" in num:
+                    num = int("0x" + num.replace("$", ""), 16)
+                else:
+                    num = int(num, 10)
+                line.bytes.append(bytes([num]))
+            except Exception as e:
+
+                second = checkIfSectionName(line.raw[1], sections)
+                second = starToAddress(currentAddress, second)
+                second = secondByteToNumeric(second, variables, registers, sections)
+                second = doTheMath(second)
+                second = lowHighNibble(second)
+                line.bytes.append(bytes([int(second.replace("#$", "0x"), 16)]))
+            continue
+
 
         for c in opcodes.keys():
             counter += 1
 
 
-            if line.bytes != []:
-                continue
-            elif (line.byteNum == opcodes[c]["bytes"] and (opcodes[c]["opcode"] == line.raw[0].upper())):
-                shit = True
+            if (line.byteNum == opcodes[c]["bytes"] and (opcodes[c]["opcode"] == line.raw[0].upper())):
 
                 if (line.byteNum == 1):
                     c = bytes([int(c.replace("$", "0x"), 16)])
@@ -311,6 +322,8 @@ def createSquence(code, opcodes, variables, registers):
                     if (number<0):
                         number = 256 + number
                     line.bytes.append(bytes([number]))
+                    break
+
 
                 else:
                     second = checkIfSectionName(line.raw[1], sections)
@@ -331,6 +344,8 @@ def createSquence(code, opcodes, variables, registers):
 
                         template = re.sub(r'[0-9a-fA-F]', "a", second.lower().replace("$", ""))
 
+                        #if "ScreenJumpTable" in line.raw[1]:
+                        #    print(line.raw, second, opcodes[c]["format"], line.byteNum)
 
                         if template.count("a")==1 or template.count("a")==3:
                             template = "a" + template
@@ -345,6 +360,61 @@ def createSquence(code, opcodes, variables, registers):
 
 
     return(freebytes, codeLines, sections)
+
+def checkForTooDistant(code, branchers):
+    from copy import deepcopy
+
+    sections = {}
+
+    num = 0
+    for line in code:
+        while line.endswith(" "):
+            line = line[:-1]
+        if line.startswith(" ") == False:
+            sections[line] = num
+        num += 1
+
+    newCode = []
+    num = 0
+    for line in code:
+        while line.endswith(" "):
+            line = line[:-1]
+        if line.startswith(" ") == True:
+            splittedLine = line.split(" ")
+
+            new = []
+            for item in splittedLine:
+                if item != "":
+                    new.append(item)
+
+            splittedLine = new
+            if splittedLine[0] in branchers:
+                dif = (abs(num - sections[splittedLine[1]]))
+                if (dif > 40):
+                    number = branchers.index(splittedLine[0])
+
+                    if number % 2 == 0:
+                        number += 1
+                    else:
+                        number -= 1
+
+
+                    newCode.append(f" {branchers[number]} *+5")
+                    newCode.append(f" JMP {splittedLine[1]}")
+                    num += 1
+                    for sec in sections:
+                        if sections[sec]>num:
+                            sections[sec]+=1
+
+                else:
+                    newCode.append(line)
+            else:
+                newCode.append(line)
+        else:
+            newCode.append(line)
+        num += 1
+
+    return(newCode)
 
 def starToAddress(address, second):
     return(second.replace("*", hex(address).replace("0x", "$")))
@@ -498,7 +568,8 @@ def compile(path):
             num = "0" + num
 
         fos = str(num).ljust(lenOfNum+2) + str(codeline.getAddressInHex()).ljust(5)+" ".join(bytes_).ljust(40) + str(codeline.byteNum).ljust(2) + str(codeline.raw).ljust(35)
-
+        if codeline.bytes == []:
+            print(codeline.raw)
 
         for section in sections:
             if sections[section][1:] == codeline.getAddressInHex():

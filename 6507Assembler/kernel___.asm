@@ -1,5 +1,12 @@
-Init_Section
-	; Variables
+*Init Section
+*---------------------------
+* This is were variables and
+* constants are asigned.
+*
+* This does not count into the
+* ROM space.
+*
+
 random = $80
 counter = $81
 temp01 = $82
@@ -33,7 +40,7 @@ NoGameMode = $98	; if 7th bit set, don't draw the game section
 bankToJump = $98		; use only bites 2-4 of $98
 			; 5-6 : FREE
 
-pfSettings = $b2		; Since CTRLPF 0-1 bits are fixed in the screen loop
+pfSettings = $b2	; Since CTRLPF 0-1 bits are fixed in the screen loop
 			; 0-1: free
 			; 2: Players move behind the pf
 			; 3: Free
@@ -66,10 +73,10 @@ P0SpriteIndex = $ae			; low nibble is P0 sprite index
 P1SpriteIndex = $ae			; high nibble is P1 sprite index
 
 pfLines = $98		; if 7th bit set, don't draw the game section
-bankToJump = $98		; use only bites 2-4 of $98
+bankToJump = $98	; use only bites 2-4 of $98
 			; 5-6 : FREE
 
-pfSettings = $b2		; Since CTRLPF 0-1 bits are fixed in the screen loop
+pfSettings = $b2	; Since CTRLPF 0-1 bits are fixed in the screen loop
 			; 0-1: free
 			; 2: Players move behind the pf
 			; 3: Free
@@ -96,114 +103,28 @@ P0SpriteIndex = $ae			; low nibble is P0 sprite index
 P1SpriteIndex = $ae			; high nibble is P1 sprite index
 
 	; Constants 
-NTSCtimer = 163
-PALtimer = 223
+NTSCtimer = 161
+PALtimer = 221
 
+***************************
+********* Start of 1st bank
+***************************
+
+*Enter Bank
+*--------------------------
+* Bank1 contains the main
+* kernel and most game
+* data
+*
 
 	fill 256	; We have to prevent writing on addresses taken by the SuperChip RAM.
 
-StartTheROM
-
-SettingsForTesting
-
-	LDA	#<Mountain
-	STA 	pf0Pointer 
-	LDA	#>Mountain
-	STA 	pf0Pointer+1
-
-	LDA	#<Castle_01
-	STA 	pf1Pointer 
-	LDA	#>Castle_01
-	STA 	pf1Pointer+1
-
-	LDA	#<Castle_02
-	STA 	pf2Pointer 
-	LDA	#>Castle_02
-	STA 	pf2Pointer+1
-
-	LDA	#<Castle_Color
-	STA 	pfColorPointer 
-	LDA	#>Castle_Color
-	STA 	pfColorPointer+1
-
-	LDA	#3
-	STA	pfLines 
-
-	LDA	#0
-	STA	pfBaseColor
-
-	LDA	#<Dragon
-	STA	P0SpritePointer
-	LDA	#>Dragon
-	STA	P0SpritePointer+1
-	
-	LDA	#<DragonColors
-	STA	P0ColorPointer
-	LDA	#>DragonColors
-	STA	P0ColorPointer+1
-
-	LDA	#55
-	STA	P0X
-	
-	LDA	#13
-	STA	P0Y
-
-	LDA	#0
-	STA	P0SpriteIndex ; 	Sets both indexes to 0;
-	STA	pfIndex
-
-	LDA	#12
-	STA	P0Height
-
-	LDA	#<UFO
-	STA	P1SpritePointer
-	LDA	#>UFO
-	STA	P1SpritePointer+1
-
-	LDA	#8
-	STA	P1Height
-
-	LDA	#93
-	STA	P1X
-	
-	LDA	#28
-	STA	P1Y
+*Main Kernel
+*--------------------------
+* 
 
 
-	; set this for static, we will see if we can add advanced colours.
-	LDA	#$0e
-	STA	COLUP1		
-
-ScreenLoop	; This is where the loop begins.
-WaitUntilOverScanTimerEnds
-	CLC
-	LDA 	INTIM
-	BMI 	WaitUntilOverScanTimerEnds
-
-SyncTheScreen
-	LDA 	#2
-	STA 	WSYNC  ; one line with VSYNC
-	STA 	VSYNC	; enable VSYNC
-	STA 	WSYNC 	; one line with VSYNC
-	STA 	WSYNC 	; one line with VSYNC
-	LDA 	#0
-	STA 	WSYNC 	; one line with VSYNC
-	STA 	VSYNC 	; turn off VSYNC
-SetVBLANKTimer
-	STA	VBLANK
-	STA 	WSYNC
-
-	CLC
- 	LDA	#170
-	STA	TIM64T
-
-VBLANKCode
-
-	BIT	pfLines 	; NoGameMode
-	BPL	NoVBlankGameSkip	; if 7th bit set (for a title or game over screen), the main game section is skipped.	
-	LDX	#0	
-	JMP	WaitUntilVBlankTimerEnds
-NoVBlankGameSkip
+MainKernel
 
 	LDA	frameColor
 	STA	COLUBK
@@ -227,6 +148,7 @@ NoVBlankGameSkip
 	ORA	#%00000001	; Reflected playfield
 	AND	#%11111101	; Always get the original colors.
 	STA	CTRLPF
+
 SettingPointersEarly
 SettingUpP0SpriteAndMissile0
 	LDA	P0Settings
@@ -294,26 +216,7 @@ CalculateP1PointerIndexDone
 	LDA	P1Y
 	STA	temp14 	; temp14 stores P1 Y position.
 
-WaitUntilVBlankTimerEnds
-	CLC
-	LDA 	INTIM
-	BMI 	WaitUntilVBlankTimerEnds
 
-    	LDA	#NTSCtimer
-    	STA	TIM64T
-
-	; TSX	
-	; STX	item		; save the stack pointer
-
-
-	BIT	pfLines 	; NoGameMode
-	BPL	NoGameSkip	; if 7th bit set (for a title or game over screen), the main game section is skipped.	
-	LDX	#0	
-	JMP	ResetAll
-NoGameSkip
-
-
-	
 SetHorPositionForP0
 	LDA	P0X
 	LDX	#0		; x = 0 means p0
@@ -578,130 +481,47 @@ ResetAll
 	; TXS
 
 
-WaitForScreenCounterEnd
+JumpBankTheScreenBank
+
+	lda	bankToJump
+	lsr
+	lsr
+	AND	#%00000111	; Get the bank number to return
+	tax
+	dex
+	STX	temp01
+
+	LDA	temp01
 	CLC
-        	LDA	INTIM 
-        	BNE 	WaitForScreenCounterEnd
-
-	LDA	#%11000010
-	STA	VBLANK
-	STA	WSYNC
-
-    	LDA	#230
-    	STA	TIM64T
-
-OverScan
-	INC	counter
-	LDA	counter
-	AND	#%00111111
-	CMP	#%00111111
-	BNE	NOINC
-
-	LDA	pfIndex
-	CMP	#24
-	BCS	NOINC
-	INC 	pfIndex
-NOINC
-	LDA	counter
-	STA	COLUP1
-	AND	#%00000111
-	CMP	#%00000111
-	BNE	.Sprite0IndexSetDone
-
-
+	ADC	temp01		; Get the location of address from the table
+	TAY			
 	
+	lda	ScreenJumpTable,y
+   	pha
+	iny
+   	lda	ScreenJumpTable,y
+   	pha
+   	pha
+   	pha
+	inx
+   	jmp	bankSwitchJump
 
-.animateP0Sprite
-    	LDA	P0SpriteIndex
-	AND	#%00001111
-     	CMP	#3
-    	BNE	.NotEQ3
-    	AND 	#%11110000
-    	STA	P0SpriteIndex
-    	jmp	.Sprite0IndexSetDone
-.NotEQ3
-	CLC
-	ADC	#1
-	STA	temp01
-	LDA	P0SpriteIndex
-	AND	#%11110000
-	ORA	temp01
-	STA	P0SpriteIndex
-	
-    	
-.Sprite0IndexSetDone
+ScreenJumpTable
+	.byte	#>ScreenBottomBank2-1
+	.byte	#<ScreenBottomBank2-1
+*	.byte	#>ScreenBottomBank3-1
+*	.byte	#<ScreenBottomBank3-1
+*	.byte	#>ScreenBottomBank4-1
+*	.byte	#<ScreenBottomBank4-1
+*	.byte	#>ScreenBottomBank5-1
+*	.byte	#<ScreenBottomBank5-1
+*	.byte	#>ScreenBottomBank6-1
+*	.byte	#<ScreenBottomBank6-1
+*	.byte	#>ScreenBottomBank7-1
+*	.byte	#<ScreenBottomBank7-1
+*	.byte	#>ScreenBottomBank8-1
+*	.byte	#<ScreenBottomBank8-1
 
-	LDA	counter
-	AND	#%10000000
-	CMP	#%10000000
-	BNE	AdvanceColorBG
-AdvanceColorPF
-	LDA	#<Castle_Color
-	STA 	pfColorPointer 
-	LDA	#>Castle_Color
-	STA 	pfColorPointer+1
-
-	LDA	#0
-	STA	pfBaseColor
-
-	LDA	#$1a
-	STA	pfFixColor
-
-	LDA	pfSettings
-	AND	#%01111111
-	STA	pfSettings
-
-	JMP	EndColoring
-
-
-AdvanceColorBG
-	LDA	#<Castle_Background
-	STA 	pfColorPointer 
-	LDA	#>Castle_Background
-	STA 	pfColorPointer+1
-
-	LDA	#0
-	STA	pfBaseColor
-
-	LDA	#$04
-	STA	pfFixColor
-
-	LDA	pfSettings
-	ORA	#%10000000
-	STA	pfSettings
-
-EndColoring
-MoveP0
-	LDA	P0Settings
-	AND #%00001000	
-	CMP	#%00001000
-	BEQ	FlyRight
-	LDA	P0X
-	CMP	#134
-   	BCS	TurnRight
-     	INC	P0X
-   	jmp	MovedP0
-TurnRight
-   	LDA	P0Settings
-   	ORA	#8
-   	STA	P0Settings
-   	jmp	MovedP0
-FlyRight
-   	LDA	#0
-   	CMP	P0X
-  	BCS	TurnLeft
-   	DEC	P0X
-	JMP	MovedP0
-TurnLeft
-  	LDA	P0Settings
-   	AND	#247
-   	STA	P0Settings  
-
-MovedP0
-
-
-OverScanEnd
-	JMP	ScreenLoop
 GetXPoz
 	STA	WSYNC	
 	SEC			;2 
@@ -716,6 +536,13 @@ DivideLoopX
 	STA	HMP0,x		; 4 (21)	0: p0, 1: p1, 2: m0, 3: m1, 4: ball
 	STA	RESP0,x		; 4 (25)
 	rts			; 6 (31)
+
+
+
+*Data Section
+*-------------------------------
+* Contains graphics data for the
+* main kernel.
 
 Zero
 Null
@@ -1023,7 +850,7 @@ UFO
  	.byte #%00011000	; 4 (36)
 
 	saveFreeBytes
-	rewind 1fd5
+	rewind 1fd4
 
 start_bank1 
 	ldx	#$ff
@@ -1061,8 +888,335 @@ start_bank1
 	Bank 2
 	fill	256
 	
+*Enter Bank
+*-----------------------------
+*
+* This is the section that happens
+* everytime you go to a new screen.
+* Should set the screen initialization
+* here.
+*
+
+EnterScreenBank2
+
+SettingsForTesting
+
+	LDA	#<Mountain
+	STA 	pf0Pointer 
+	LDA	#>Mountain
+	STA 	pf0Pointer+1
+
+	LDA	#<Castle_01
+	STA 	pf1Pointer 
+	LDA	#>Castle_01
+	STA 	pf1Pointer+1
+
+	LDA	#<Castle_02
+	STA 	pf2Pointer 
+	LDA	#>Castle_02
+	STA 	pf2Pointer+1
+
+	LDA	#<Castle_Color
+	STA 	pfColorPointer 
+	LDA	#>Castle_Color
+	STA 	pfColorPointer+1
+
+	LDA	#3
+	STA	pfLines 
+
+	LDA	#0
+	STA	pfBaseColor
+
+	LDA	#<Dragon
+	STA	P0SpritePointer
+	LDA	#>Dragon
+	STA	P0SpritePointer+1
+	
+	LDA	#<DragonColors
+	STA	P0ColorPointer
+	LDA	#>DragonColors
+	STA	P0ColorPointer+1
+
+	LDA	#55
+	STA	P0X
+	
+	LDA	#13
+	STA	P0Y
+
+	LDA	#0
+	STA	P0SpriteIndex ; 	Sets both indexes to 0;
+	STA	pfIndex
+
+	LDA	#12
+	STA	P0Height
+
+	LDA	#<UFO
+	STA	P1SpritePointer
+	LDA	#>UFO
+	STA	P1SpritePointer+1
+
+	LDA	#8
+	STA	P1Height
+
+	LDA	#93
+	STA	P1X
+	
+	LDA	#28
+	STA	P1Y
+
+
+	; set this for static, we will see if we can add advanced colours.
+	LDA	#$0e
+	STA	COLUP1		
+
+
+*Overscan
+*-----------------------------
+*
+* This is the place of the main
+* code of this screen.
+*
+
+OverScanBank2
+
+	INC	counter
+	LDA	counter
+	AND	#%00111111
+	CMP	#%00111111
+	BNE	NOINC
+
+	LDA	pfIndex
+	CMP	#24
+	BCS	NOINC
+	INC 	pfIndex
+NOINC
+	LDA	counter
+	STA	COLUP1
+	AND	#%00000111
+	CMP	#%00000111
+	BNE	.Sprite0IndexSetDone
+
+
+	
+
+.animateP0Sprite
+    	LDA	P0SpriteIndex
+	AND	#%00001111
+     	CMP	#3
+    	BNE	.NotEQ3
+    	AND 	#%11110000
+    	STA	P0SpriteIndex
+    	jmp	.Sprite0IndexSetDone
+.NotEQ3
+	CLC
+	ADC	#1
+	STA	temp01
+	LDA	P0SpriteIndex
+	AND	#%11110000
+	ORA	temp01
+	STA	P0SpriteIndex
+	
+    	
+.Sprite0IndexSetDone
+
+	LDA	counter
+	AND	#%10000000
+	CMP	#%10000000
+	BNE	AdvanceColorBG
+AdvanceColorPF
+	LDA	#<Castle_Color
+	STA 	pfColorPointer 
+	LDA	#>Castle_Color
+	STA 	pfColorPointer+1
+
+	LDA	#0
+	STA	pfBaseColor
+
+	LDA	#$1a
+	STA	pfFixColor
+
+	LDA	pfSettings
+	AND	#%01111111
+	STA	pfSettings
+
+	JMP	EndColoring
+
+
+AdvanceColorBG
+	LDA	#<Castle_Background
+	STA 	pfColorPointer 
+	LDA	#>Castle_Background
+	STA 	pfColorPointer+1
+
+	LDA	#0
+	STA	pfBaseColor
+
+	LDA	#$04
+	STA	pfFixColor
+
+	LDA	pfSettings
+	ORA	#%10000000
+	STA	pfSettings
+
+EndColoring
+MoveP0
+	LDA	P0Settings
+	AND #%00001000	
+	CMP	#%00001000
+	BEQ	FlyRight
+	LDA	P0X
+	CMP	#134
+   	BCS	TurnRight
+     	INC	P0X
+   	jmp	MovedP0
+TurnRight
+   	LDA	P0Settings
+   	ORA	#8
+   	STA	P0Settings
+   	jmp	MovedP0
+FlyRight
+   	LDA	#0
+   	CMP	P0X
+  	BCS	TurnLeft
+   	DEC	P0X
+	JMP	MovedP0
+TurnLeft
+  	LDA	P0Settings
+   	AND	#247
+   	STA	P0Settings  
+
+MovedP0
+
+
+*VSYNC
+*----------------------------
+* This is a fixed section in
+* every bank.
+*
+
+WaitUntilOverScanTimerEndsBank2
+	CLC
+	LDA 	INTIM
+	BMI 	WaitUntilOverScanTimerEndsBank2
+
+* Sync the Screen
+*
+
+	LDA 	#2
+	STA 	WSYNC  ; one line with VSYNC
+	STA 	VSYNC	; enable VSYNC
+	STA 	WSYNC 	; one line with VSYNC
+	STA 	WSYNC 	; one line with VSYNC
+	LDA 	#0
+	STA 	WSYNC 	; one line with VSYNC
+	STA 	VSYNC 	; turn off VSYNC
+
+* Set the timer for VBlank
+*
+
+	STA	VBLANK
+	STA 	WSYNC
+
+	CLC
+ 	LDA	#170
+	STA	TIM64T
+
+*VBLANK
+*-----------------------------
+* This is were you can set a piece
+* of code as well, but some part is
+* used by the kernel.
+*
+VBLANKBank2
+
+
+VBLANKEndBank2
+	CLC
+	LDA 	INTIM
+	BMI 	VBLANKEndBank2
+
+    	LDA	#NTSCtimer
+    	STA	TIM64T
+
+	; TSX	
+	; STX	item		; save the stack pointer
+
+
+*ScreenTop
+*--------------------------------  
+* This is the section for the
+* top part of the screen.
+*
+
+ScreenTopBank2
+
+
+*SkipIfNoGameSet
+*---------------------------------
+*
+	BIT	pfLines 		; NoGameMode
+	BMI	ScreenBottomBank2	; if 7th bit set (for a title or game over screen), the main game section is skipped.	
+	JMP	ReturnBank2
+
+*JumpToMainKernel
+*---------------------------------
+* For this, the program go to main
+* kernel in bank1.
+
+	LDA	#2
+	STA	temp01
+	asl
+	asl			; Rol left two bits to save bankNumber
+	STA	temp01
+
+	LDA 	bankToJump
+	AND	#%11100011	; Clear previous bankNumber
+	ORA	temp01		; Save the bankNumber
+
+
+	lda	#>MainKernel-1
+   	pha
+   	lda	#<MainKernel-1
+   	pha
+   	pha
+   	pha
+   	ldx	#1
+   	jmp	bankSwitchJump
+
+*ScreenBottom
+*--------------------------------  
+* This is the section for the
+* bottom part of the screen.
+*
+
+ScreenBottomBank2
+
+
+* JumpBankToOverscan
+*
+
+ReturnBank2
+	CLC
+        LDA	INTIM 
+        BNE 	ReturnBank2
+
+	LDA	#%11000010
+	STA	VBLANK
+	STA	WSYNC
+
+    	LDA	#230
+    	STA	TIM64T
+	JMP	OverScanBank2
+
+	align	256
+
+*Data Section
+*------------------------------------
+*This is the place for data 
+*
+
 	saveFreeBytes
-	rewind 	2fd5
+	rewind 	2fd4
 	
 start_bank2
 	ldx	#$ff
@@ -1101,8 +1255,8 @@ start_bank2
 	fill	256
 	
 	saveFreeBytes
-	rewind 	3fd5
-	
+	rewind 	3fd4
+
 start_bank3
 	ldx	#$ff
    	txs
@@ -1140,7 +1294,7 @@ start_bank3
 	fill	256
 	
 	saveFreeBytes
-	rewind 	4fd5
+	rewind 	4fd4
 	
 start_bank4
 	ldx	#$ff
@@ -1180,7 +1334,7 @@ start_bank4
 	fill	256
 	
 	saveFreeBytes
-	rewind 	5fd5
+	rewind 	5fd4
 	
 start_bank5
 	ldx	#$ff
@@ -1219,7 +1373,7 @@ start_bank5
 	fill	256
 	
 	saveFreeBytes
-	rewind 	6fd5
+	rewind 	6fd4
 	
 start_bank6
 	ldx	#$ff
@@ -1258,7 +1412,7 @@ start_bank6
 	fill	256
 	
 	saveFreeBytes
-	rewind 	7fd5
+	rewind 	7fd4
 	
 start_bank7
 	ldx	#$ff
@@ -1296,7 +1450,7 @@ start_bank7
 	Bank 8
 	fill	256
 	
-	saveFreeBytes
+	
 	align 256
 	
 Start
@@ -1309,17 +1463,19 @@ Start
    	cmp	#$A9		;check RAM location #2   	bne	MachineIs2600
    	dey
 MachineIs2600
-	LDA	#0
-	LDX	#$ff
-	TXS		; Set the stack register to the end of memory
+	ldx	#0
+  	txa
+clearmem
+   	inx
+   	txs
+   	pha
+	cpx	#$ff
+   	bne	clearmem	; Clear the RAM.
 
-   	LDX 	#130	; We start at $82, leaving the garbage at "rand" and "counter"
-			; will make pseudo random generating more random.
-ClearRAM
-   	STA 	0,x
-	INX
-	CPX	#255
-	BNE 	ClearRAM 
+	LDA	$F080		; Sets two values for the SC RAM 
+	STA	$80		; to Random and Counter variables
+	LDA	$F081
+	STA	$81
 
 	LDY	#0
 	TAY		
@@ -1327,16 +1483,18 @@ ClearSCRAM
 	STA 	$F000,Y
 	INY
 	BPL 	ClearSCRAM
-	lda	#>(StartTheROM-1)
+
+	lda	#>EnterScreenBank2-1)
    	pha
-   	lda	#<(StartTheROM-1)
+   	lda	#<EnterScreenBank2-1)
    	pha
    	pha
    	pha
-   	ldx	#1
+   	ldx	#2
    	jmp	bankSwitchJump
 
-	rewind 	8fd5
+	saveFreeBytes
+	rewind 	8fd4
 
 bankSwitchCode
  	ldx	#$ff
