@@ -389,7 +389,11 @@ def checkForTooDistant(code, branchers):
 
             splittedLine = new
             if splittedLine[0] in branchers:
-                dif = (abs(num - sections[splittedLine[1]]))
+                try:
+                    dif = (abs(num - sections[splittedLine[1]]))
+                except:
+                    if "*" in splittedLine[1]:
+                        dif = 1
                 if (dif > 40):
                     number = branchers.index(splittedLine[0])
 
@@ -464,14 +468,20 @@ def doTheMath(raw):
     if ("+" not in raw) and ("-" not in raw):
         return(raw)
 
-    base = re.findall(r'\$[a-fA-f0-9]+', raw)[0]
     num = re.findall(r'[+|-]\d+', raw)[0]
+    if "$" in raw:
+        base = re.findall(r'\$[a-fA-f0-9]+', raw)[0]
 
+        baseNumber = int(base.replace("$", "0x"), 16)
 
-    baseNumber = int(base.replace("$", "0x"), 16)
+        newNum = hex(baseNumber+int(num)).replace("0x", "$")
+        raw = raw.replace(base, newNum).replace(num, "")
+    else:
+        base = re.findall(r'\d+[+|-]]', raw)[0]
+        baseNumber = int(base[:-1])
+        newNum = str(baseNumber+int(num))
 
-    newNum = hex(baseNumber+int(num)).replace("0x", "$")
-    raw = raw.replace(base, newNum).replace(num, "")
+        raw = raw.replace(base, newNum).replace(num, "")
 
     return (raw)
 

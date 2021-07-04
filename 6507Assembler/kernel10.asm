@@ -98,46 +98,75 @@ PAL_Overscan =	206
 
 EnterKernel
 	STA	WSYNC
-	LDA	frameColor	; 3
-	STA	COLUBK		; 3 (6)
-	STA 	COLUPF		; 3 (9)
+	LDA	frameColor
+	STA	COLUBK
+	STA 	COLUPF	
 
 
 
-	LDA	#0	;2 (11)
-	STA 	ENAM0	;3 (14) 
-	STA 	ENAM1	;3 (17)
-	STA 	ENABL	; Disables missiles and ball 3 (20)
-	STA	GRP0	;3 (23)
-	STA	GRP1	; Sets player sprites to blank 3(26)
+	LDA	#0
+	STA 	ENAM0	; 
+	STA 	ENAM1	;
+	STA 	ENABL	; Disables missiles and ball
+	STA	GRP0	;
+	STA	GRP1	; Sets player sprites to blank
 
- 	STA	VDELP0	;3 (29)
-	STA	VDELP1  ;3 (32)
+ 	STA	VDELP0
+	STA	VDELP1 
 	
-	STA	PF1	;3 (35)
-	STA	PF2	;3 (38) 
-	STA	PF0	;3 (41)
-	STA	temp11 	;3 (44)
+	STA	PF1
+	STA	PF2	
+	STA	PF0
+	STA	temp11
 
-	LDA	pfSettings	;3 (47)
-	ORA	#%00000001	; Reflected playfield 2 (49)
-	AND	#%11111101	; Always get the original colors. 2 (51)
-	STA	CTRLPF		; 3 (54)
-
+	LDA	pfSettings
+	ORA	#%00000001	; Reflected playfield
+	AND	#%11111101	; Always get the original colors.
+	STA	CTRLPF
+SettingPointersEarly
 SettingUpP0SpriteAndMissile0
 
-	LDA	P0Settings	;3 (67)
-	STA	REFP0		;3 (70)
-	AND	#%00110111	;2 (72)
-	STA	NUSIZ0	; Sets P0 and M0 registers 3
+	LDA 	P0Height
+	CLC
+	ADC	#1
+	STA	temp01	
 
-	LDA	P0SpritePointer+1	; temp08 will store the sprite pointers high byte ; 3 (6)
-	STA	temp07+1		; 2 (9)
+	LDA	P0Settings
+	STA	REFP0
+	AND	#%00110111
+	STA	NUSIZ0	; Sets P0 and M0 registers
 
+	LDA	P0SpritePointer+1	; temp08 will store the sprite pointers high byte
+	STA	temp07+1
+
+	LDA	P0SpriteIndex
+	AND	#%00001111	; Get low nibble for P0 index
+	TAY			; Move it to Y for calculations
+	LDA	P0SpritePointer
+
+CalculateP0PointerIndex
+	; You can only have the maximum number of sprites 256/height that is always smaller than16
+	; (over 16 px height, you cannot use all 16 indexes because of the paging overflow that would break timing.
+	CPY	#0
+	BEQ	CalculateP0PointerIndexDone
+	CLC	
+	ADC	temp01
+	DEY
+
+	JMP	CalculateP0PointerIndex	
+	
+CalculateP0PointerIndexDone
+	STA	temp07	; temp07 will store the sprite pointers low byte
+ 
 	LDA	P0Y
 	STA	temp09 	; temp09 stores P0 Y position.
 	
 SettingUpP1SpriteAndMissile1
+
+	LDA 	P1Height
+	CLC
+	ADC	#1
+	STA	temp01	
 
 	LDA	P1Settings
 	STA	REFP1
@@ -147,27 +176,45 @@ SettingUpP1SpriteAndMissile1
 	LDA	P1SpritePointer+1	; temp13 will store the sprite pointers high byte
 	STA	temp12+1
 
+	LDA	P1SpriteIndex	
+
+
+	AND	#%11110000	; Get high nibble for P1 index
+	lsr
+	lsr
+	lsr
+	lsr
+
+	TAY			; Move it to Y for calculations
+	LDA	P1SpritePointer
+
+CalculateP1PointerIndex
+	; You can only have the maximum number of sprites 256/height that is always smaller than16
+	; (over 16 px height, you cannot use all 16 indexes because of the paging overflow that would break timing.
+
+	CPY	#0
+	BEQ	CalculateP1PointerIndexDone
+	CLC	
+	ADC	temp01
+	DEY
+
+	JMP	CalculateP1PointerIndex
+CalculateP1PointerIndexDone
+
+	STA	temp12	; temp12 will store the sprite pointers low byte
+
 	LDA	P1Y
 	STA	temp14 	; temp14 stores P1 Y position.
 
 SetHorPositionForP0
 	LDA	P0X
-	CMP	#135
-	BCS	*+4
-	STA	WSYNC
-
 	LDX	#0		; x = 0 means p0
 
 	JSR	GetXPoz
 	STA 	WSYNC
-	
 
 SetHorPositionForP1
 	LDA	P1X
-	CMP	#135
-	BCS	*+4
-	STA	WSYNC
-
 	LDX	#1		; x = 1 means p1
 
 	JSR	GetXPoz
@@ -211,12 +258,15 @@ MultiplyDone
 	DEY
 	LDA	(P0ColorPointer),y	
 	STA	COLUP0		; Save P0Color for static
+	
 
 	STA	WSYNC
 
 	LDA	pfLines		; 3 
 	AND	#%00000011	; 2 
 	STA	temp03		; 3 
+
+
 
 	sleep 	15
 
@@ -476,106 +526,6 @@ DivideLoopX
 	STA	HMP0,x		; 4 (21)	0: p0, 1: p1, 2: m0, 3: m1, 4: ball
 	STA	RESP0,x		; 4 (25)
 	rts			; 6 (31)
-
-*Calculations during VBLANK
-*----------------------------
-*
-
-CalculateDuringVBLANK
-	LDA 	P0Height
-	CLC
-	ADC	#1
-	STA	temp01	
-
-	LDA	P0SpriteIndex	
-	AND	#%00001111	; Get low nibble for P0 index
-	TAY			; Move it to Y for calculations
-	LDA	P0SpritePointer
-	
-CalculateP0PointerIndex
-	; You can only have the maximum number of sprites 256/height that is always smaller than 16
-	; (over 16 px height, you cannot use all 16 indexes because of the paging overflow that would break timing.
-
-	CPY	#0
-	BEQ	CalculateP0PointerIndexDone
-	CLC	
-	ADC	temp01
-	DEY
-	JMP	CalculateP0PointerIndex
-
-
-CalculateP0PointerIndexDone
-	STA	temp07		; temp12 will store the sprite pointers low byte
- 
-	LDA 	P1Height
-	CLC
-	ADC	#1
-	STA	temp01	
-
-	LDA	P1SpriteIndex	
-	AND	#%11110000	; Get high nibble for P1 index
-	lsr
-	lsr
-	lsr
-	lsr
-	TAY			; Move it to Y for calculations
-	LDA	P1SpritePointer
-	
-CalculateP1PointerIndex
-	; You can only have the maximum number of sprites 256/height that is always smaller than 16
-	; (over 16 px height, you cannot use all 16 indexes because of the paging overflow that would break timing.
-
-	CPY	#0
-	BEQ	CalculateP1PointerIndexDone
-	CLC	
-	ADC	temp01
-	DEY
-	JMP	CalculateP1PointerIndex
-
-
-CalculateP1PointerIndexDone
-	STA	temp12		; temp12 will store the sprite pointers low byte
-
-JumpBackToBankScreenTop
-
-	lda	bankToJump
-	lsr
-	lsr
-	AND	#%00000111	; Get the bank number to return
-	tax
-	
-	SEC
-	SBC	#2
-	STA	temp01		
-	CLC
-	ADC	temp01		; ([bankNum - 2] * 2 )
-	TAY			; Get the location of address from the table
-		
-		
-	lda	VBlankJumpTable,y
-   	pha
-   	lda	VBlankJumpTable+1,y
-   	pha
-   	pha
-   	pha
-   	jmp	bankSwitchJump
-
-VBlankJumpTable
-	.byte	#>VBlankEndBank2-1
-	.byte	#<VBlankEndBank2-1
-*	.byte	#>VBlankEndBank3-1
-*	.byte	#<VBlankEndBank3-1
-*	.byte	#>VBlankEndBank4-1
-*	.byte	#<VBlankEndBank4-1
-*	.byte	#>VBlankEndBank5-1
-*	.byte	#<VBlankEndBank5-1
-*	.byte	#>VBlankEndBank6-1
-*	.byte	#<VBlankEndBank6-1
-*	.byte	#>VBlankEndBank7-1
-*	.byte	#<VBlankEndBank7-1
-*	.byte	#>VBlankEndBank8-1
-*	.byte	#<VBlankEndBank8-1
-
 
 *Data Section
 *-------------------------------
@@ -978,7 +928,7 @@ EnterScreenBank2
 	LDA	#>DragonColors
 	STA	P0ColorPointer+1
 
-	LDA	#72
+	LDA	#55
 	STA	P0X
 	
 	LDA	#19
@@ -999,7 +949,7 @@ EnterScreenBank2
 	LDA	#7
 	STA	P1Height
 
-	LDA	#76
+	LDA	#93
 	STA	P1X
 	
 	LDA	#33
@@ -1041,7 +991,6 @@ OverScanBank2
 
 	INC	counter
 	LDA	counter
-
 	AND	#%00111111
 	CMP	#%00111111
 	BNE	NOINC
@@ -1061,13 +1010,13 @@ NOINC
     	LDA	P0SpriteIndex
 	AND	#%00001111
      	CMP	#3
-    	BCC	*+7
+    	BNE	.NotEQ3
     	LDA	#0
-    	jmp	*+7
-
+    	jmp	.saveDataP0
+.NotEQ3
 	CLC
 	ADC	#1
-
+.saveDataP0
 	STA	temp01
 	LDA	P0SpriteIndex
 	AND	#%11110000
@@ -1083,25 +1032,27 @@ NOINC
 	lsr
 	lsr
      	CMP	#2
-    	BCC	*+7
-    	LDA	#0
-    	jmp	*+7
-
+    	BNE	.NotEQ2
+	LDA	#0
+    	jmp	.saveDataP1
+.NotEQ2
 	CLC
 	ADC	#1
 	asl
 	asl
 	asl	
 	asl
-
+.saveDataP1
 	STA	temp01
 	LDA	P1SpriteIndex
 	AND	#%00001111
 	ORA	temp01
 	STA	P1SpriteIndex
 	
-	
+    	
 .Sprite1IndexSetDone
+
+
 
 
 	LDA	counter
@@ -1151,10 +1102,9 @@ MoveP0
 	CMP	#%00001000
 	BEQ	FlyRight
 	LDA	P0X
-	CMP	#142
+	CMP	#134
    	BCS	TurnRight
      	INC	P0X
-	DEC	P1X
    	jmp	MovedP0
 TurnRight
    	LDA	P0Settings
@@ -1166,7 +1116,6 @@ FlyRight
    	CMP	P0X
   	BCS	TurnLeft
    	DEC	P0X
-	INC	P1X
 	JMP	MovedP0
 TurnLeft
   	LDA	P0Settings
@@ -1217,45 +1166,9 @@ WaitUntilOverScanTimerEndsBank2
 *
 VBLANKBank2
 
-
-
-*SkipIfNoGameSet - VBLANK
-*---------------------------------
-*
-
-	BIT	pfLines 		; NoGameMode
-	BMI	VBlankEndBank2		; if 7th bit set (for a title or game over screen), the calculation part is skipped.		
-
-*Costful Calculations in VBLANK
-*--------------------------------------------------------
-* There are some really costful calculations those would
-* require a lot of WSYNCS during the draw section, to avoid
-* that, we do them in VBLANK.
-*
-
-	LDA	#2
-	asl
-	asl			; Rol left two bits to save bankNumber
-	STA	temp01
-
-	LDA 	bankToJump
-	AND	#%11100011	; Clear previous bankNumber
-	ORA	temp01		; Save the bankNumber
-	STA	bankToJump
-
-	lda	#>(CalculateDuringVBLANK-1)
-   	pha
-   	lda	#<(CalculateDuringVBLANK-1)
-   	pha
-   	pha
-   	pha
-   	ldx	#1
-   	jmp	bankSwitchJump
-
-VBlankEndBank2
 	CLC
 	LDA 	INTIM
-	BMI 	VBlankEndBank2
+	BMI 	VBLANKBank2
 
     	LDA	#230
     	STA	TIM64T
@@ -1269,7 +1182,6 @@ VBlankEndBank2
 * This is the section for the
 * top part of the screen.
 *
-
 
 
 *SkipIfNoGameSet

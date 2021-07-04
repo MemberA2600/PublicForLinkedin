@@ -1,0 +1,25 @@
+*NTSC
+vblank_time =	43
+overscan_time =	37
+
+vblank_time =	58
+overscan_time =	82
+
+Rendes kernel:
+VSYNC után:
+overscan_time+5+128
+
+Score után:
+#vblank_time+9+128
+
+Titlescreen:
+
+Vsync után / Vblank elõtt:
+#vblank_time+128
+(utána állítod a vblankot 0-ra!)
+
+Screen elõtt:
+#230
+
+Overscan elõtt:
+#overscan_time+128-3-1
