@@ -99,7 +99,7 @@ def sleepToCode(text):
             new.append(" NOP\n"*int(number/2))
         else:
             #new.append(" NOP\n"*int((number/2)-1)+" JMP *+3\n")
-            new.append(" NOP\n" * int((number / 2) - 1) + " BIT $00\n")
+            new.append(" NOP\n" * int((number / 2) - 1) + " BIT VBLANK\n")
 
     return("\n".join(new))
 
@@ -185,7 +185,7 @@ def createSquence(code, opcodes, variables, registers):
                     current.seq = currentSEQNumber
                     currentSEQNumber+=1
                     current.raw = deepcopy(line)
-                    current.bytes.append(bytes([255]))
+                    current.bytes.append(bytes([0]))
 
             elif line[0].upper()=="FILL":
                 counter = int(line[1])
@@ -197,7 +197,7 @@ def createSquence(code, opcodes, variables, registers):
                     current.seq = currentSEQNumber
                     currentSEQNumber+=1
                     current.raw = deepcopy(line)
-                    current.bytes.append(bytes([255]))
+                    current.bytes.append(bytes([0]))
                     counter -= 1
 
 
@@ -211,7 +211,7 @@ def createSquence(code, opcodes, variables, registers):
                     current.seq = currentSEQNumber
                     currentSEQNumber += 1
                     current.raw = deepcopy(line)
-                    current.bytes.append(bytes([255]))
+                    current.bytes.append(bytes([0]))
 
             elif line[0].upper() == "saveFreeBytes".upper():
                 freebytes[currentBank] = 4096 - currentAddress%4096
@@ -491,12 +491,23 @@ def lowHighNibble(raw):
 
     if ("<" not in raw) and (">" not in raw):
         return(raw)
-    numbers = re.findall(r'[<|>]\$[a-fA-F0-9]{4}', raw.replace("(",""))[0]
+
+    #print("-------------\n"+raw)
+
+    try:
+        numbers = re.findall(r'[<|>]\$[a-fA-F0-9]{4}', raw.replace("(",""))[0]
+    except:
+        changeTo = re.findall(r'[a-fA-F0-9]{3}', raw.replace("(",""))[0]
+        raw = raw.replace(changeTo, "0"+changeTo)
+        numbers = re.findall(r'[<|>]\$[a-fA-F0-9]{4}', raw.replace("(",""))[0]
+
+    #print(numbers)
     if numbers[0]=="<":
         numbers=numbers[-2:]
     else:
-        """
+
         highNibbleChanger = {
+            "0": "0",
             "1": "1",
             "2": "3",
             "3": "5",
@@ -506,10 +517,12 @@ def lowHighNibble(raw):
             "7": "d",
             "8": "f"
         }
-        """
+
         numbers=numbers[-4:-2]
-        numbers = hex(((int("0x"+numbers[0], 16)-1)*2)+1)[2:] + numbers[1]
-        #numbers = highNibbleChanger[numbers[0]] + numbers[1]
+        #print(numbers)
+        #numbers = hex(((int("0x"+numbers[0], 16)-1)*2)+1)[2:] + numbers[1]
+        numbers = highNibbleChanger[numbers[0]] + numbers[1]
+    #print(numbers)
     return ("#$"+numbers)
 
 def secondByteToNumeric(raw, variables, registers, sections):
