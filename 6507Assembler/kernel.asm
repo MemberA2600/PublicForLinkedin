@@ -42,26 +42,29 @@ NoGameMode = $9e	; if 7th bit set, don't draw the game section
 bankToJump = $9e	;	; use only bites 2-4 of $98
 			; 5-6 : FREE
 ************************
-pfSettings = $9f	; Since CTRLPF 0-1 bits are fixed in the screen loop
-pfEdges	= $9f		; 0-1: free
-			; 2: Players move behind the pf
-			; 3: Free
-			; 4-5: Free
-			; 6: 0: Objects stops at edges. 1: Object appear on opposite side
-************************  7: If set, game checks edges in VBLANK.
 
 *** Player Settings
-P0SpritePointer = $a0		; 16bit
-P0ColorPointer = $a2		; 16bit
-P1SpritePointer = $a4		; 16bit
-P1ColorPointer = $a6		; 16bit
+P0SpritePointer = $9f		; 16bit
+P0ColorPointer = $a1		; 16bit
+P1SpritePointer = $a3		; 16bit
+P1ColorPointer = $a5		; 16bit
 
+************
+* Settings *
 ****************************************	
-P0Settings = $a8			; Bits 0-2 are sprite settings, 
-P0Mirrored = $a8			; 3 is reflection, bits 4-5 are missile settings. 
-P1Settings = $a9			
-P1Mirrored = $a9			; Must be in order!
+P0Settings = $a7			; Bits 0-2 are sprite settings, 
+P0Mirrored = $a7			; 3 is reflection, bits 4-5 are missile settings. 
+P1Settings = $a8			
+P1Mirrored = $a8			; Must be in order!
 ****************************************
+pfSettings = $a9	; Since CTRLPF 0-1 bits are fixed in the screen loop
+pfEdges	= $a9		; 0-1: free
+			; 2: Players move behind the pf
+Has to be here because	; 3: Free
+of the edge check	; 4-5: Ball Settings
+routine.		; 6-7: 00 - Nothing 01 - Mixed 10 - All stop 11 - All go through 
+************************
+
 P0Height = $aa
 P1Height = $ab
 
@@ -75,15 +78,17 @@ P0Y = $ad
 P1Y = $ae	
 M0Y = $af
 M1Y = $b0
+BLY = $b1
 
-P0X = $b1
-P1X = $b2
-M0X = $b3
-M1X = $b4
+P0X = $b2
+P1X = $b3
+M0X = $b4
+M1X = $b5
+BLX = $b6
 
 *** Fake Missile Colors
-M0Color = $b5
-M1Color = $b6
+M0Color = $b7
+M1Color = $b8
 
 
 	; Constants
@@ -113,7 +118,7 @@ EnterKernel
 	LDA	frameColor	
 	sta	WSYNC
 	STA	COLUBK
-  	ldx	#3 		; From m1 -> p0
+  	ldx	#4 		; From bl -> p0
 
 HorPosLoop		
    	lda	P0X,X	
@@ -126,10 +131,15 @@ DivideLoop
    	dex
    	bpl	HorPosLoop	
 
-	ldx	#3		; m1
-   	ldy	temp04
+	ldx	#4		; bl
+   	ldy	temp05
    	lda	FineAdjustTable256,Y
    	sta	HMP0,X		
+
+	dex			; m1
+   	ldy	temp04
+   	lda	FineAdjustTable256,Y
+   	sta	HMP0,X	
    
 	dex			; m0
    	ldy	temp03
@@ -208,24 +218,22 @@ FinishPreparation
 
 	LDA	#42	; 2 (7)
 	TAX		; 2 (9)
-	lsr		; 2 (11)
-	lsr		; 2 (13)
-	
-	tay		;2 (15)
+	tay		;2 (11)
+	DEY
 
-	LDA	(pfColorPointer),y	; 5 (20)
-	CLC				; 2 (22)
-	ADC	pfBaseColor 		; 3 (25)
-	STA	temp02		; savePFColor 3 (28)
+	LDA	(pfColorPointer),y	; 5 (16)
+	CLC				; 2 (18)
+	ADC	pfBaseColor 		; 3 (21)
+	STA	temp02		; savePFColor 3 (24)
 
-	LDA	(bkColorPointer),y 	; 5 (31)
-	CLC				; 2 (33)
+	LDA	(bkColorPointer),y 	; 5 (29)
+	CLC				; 2 (31)
 	ADC	bkBaseColor 		; 3 (34)
-	STA	temp04		; saveBKColor 3 (36)
+	STA	temp04		; saveBKColor 3 (37)
 
-	LDY 	P1Height		; 3 (39)  		
-	LDA	(P1ColorPointer),y	; 5 (44)
-	STA	COLUP1		; Load first color 3 (47)
+	LDY 	P1Height		; 3 (40)  		
+	LDA	(P1ColorPointer),y	; 5 (45)
+	STA	COLUP1		; Load first color 3 (48)
 
 	STA	WSYNC
 	
@@ -316,7 +324,7 @@ saveP0Sprite
 
 
 	STX	temp13		; 3 (52) Saves the lineNum
-	ldx 	#$1e		; Address of ENAM1 2 (51) 
+	ldx 	#$1f		; Address of ENABL 2 (51) 
 	txs			; 2 (53) 
 	LDX	temp13		; 3 (55) Retrive the lineNum
 	sleep	2
@@ -346,20 +354,18 @@ MiddleLine
 	STA	PF0		; 3 (41)
 	STA	temp06		; 3 (44)
 
-	TXA			; 2 (46)
-	lsr			; 2 (48)
-	lsr			; 2 (50)
-	TAY			; 2 (52)
-
+	DEY			; 2
+	cpx	BLY		; 3
+	php			; 3
 	cpx	M1Y		; 3
 	php			; 3
 	cpx	M0Y		; 3
 	php			; 3 (12)
 
 	LDA	(pfColorPointer),y	; 6 (73)
-	STA	temp02		; 3 (76)
+	ADC	pfBaseColor
 LastLine
-
+	STA	temp02		; 3 (-3)
 	LDA	temp05		; 3 (3)
 	STA	PF0		; 3 (6)
 
@@ -379,8 +385,6 @@ LastLine
 saveP1Sprite
 	STA	temp03		; 3 (47) ;
 	; 29
-
-	sleep	4
 
 	LDA	temp06		; 3 (53)
 	STA	PF0		; 3 (56)
@@ -498,11 +502,14 @@ CalculateDuringVBLANK
 CheckIfOutOfBorders
 	
 	LDA	pfEdges
-	BPL	CalculateIndexes	
+	AND	#%11000000
+	STA	temp07
+	CMP	#%00000000
+	BEQ	CalculateIndexes	
 
 	TSX
 	STX	temp03	
-	LDX	#3	; p0, p1, m0, m1
+	LDX	#4	; p0, p1, m0, m1, bl
 
 
 NextItemThings
@@ -511,8 +518,9 @@ NextItemThings
 * temp02 - Largest Y allowed	
 * temp03 - Stack pointer saved
 * temp04 - EvenOrOdd
-* temp05 - Temporal Storage
+* temp05, temp08 - Temporal Storage
 * temp06 - Smallest Y allowed
+* temp07 - Mode
 *
 	TXA	
 	TXS	
@@ -523,22 +531,29 @@ NotLargerThan
 	TAX
 	STA	temp04
 	LDA	P0Settings,x
-
-	TSX
-	CPX	#2
-	BCS	ItsAMissile
 	AND	#%00000111
 	TAX	
 	LDA	XHorBorderAddSprite,x
-	JMP	NotAMissile
+	TSX
+	CPX	#2
+	BCC	NotAMissile
 ItsAMissile	
-	AND	#%00110000
+	SEC
+	SBC	#7
+	sta	temp05
+	LDX	temp04
+	TAX
+	LDA	P0Settings,x
+	AND	#%00110000		
 	lsr
 	lsr
 	lsr
 	lsr
 	TAX
-	LDA	XHorBorderAddMissile,x		
+	LDA	XHorBorderAddMissile,x
+	CLC
+	ADC	temp05
+
 NotAMissile
 	STA	temp05
 	LDA	#165	
@@ -579,10 +594,17 @@ ItsAMissile3
 NotAMissile3
 	STA	temp06
 
-	LDA	pfEdges
-	BVC	AppearOpposite
-
 	TSX
+	LDA	temp07
+	CMP	#%11000000
+	BEQ	AppearOpposite
+
+	LDA	temp07
+	BMI	NoBLAHBLAH
+	CPX	#2
+	BCS	AppearOpposite
+
+NoBLAHBLAH
 	LDA	P0X,x
 	CMP	#16
 	BCS	NotSmallerThan
@@ -613,7 +635,6 @@ PrepareForNext
 	JMP	StackBackUp
 
 AppearOpposite
-	TSX
 	LDA	P0X,x
 	CMP	#16
 	BCS	NotSmallerThan2
@@ -862,7 +883,7 @@ Castle_01
 	BYTE %00000011
 	BYTE %00000011
 	BYTE %00000000
-	BYTE %00000000	; 41
+	BYTE %00000000	; 42
 
 
 Castle_02
@@ -907,7 +928,7 @@ Castle_02
 	BYTE %00000000
 	BYTE %00000000
 	BYTE %00000000
-	BYTE %00000000	;82
+	BYTE %00000000	;84
 
 Mountain
 	BYTE %11111100
@@ -951,40 +972,116 @@ Mountain
 	BYTE %00000000
 	BYTE %00010001
 	BYTE %00110011
-	BYTE %01110111	; 123
+	BYTE %01110111	; 126
 
 Castle_Color
+	BYTE	$02
+	BYTE	$04
 	BYTE	$04
 	BYTE	$02
 	BYTE	$04
-	BYTE	$06
-	BYTE	$08
-	BYTE	$06
+	BYTE	$04
+	BYTE	$02
 	BYTE	$04
 	BYTE	$04
 	BYTE	$06
-	BYTE	$08
+	BYTE	$06
+	BYTE	$04
+	BYTE	$04
+	BYTE	$06	
 	BYTE	$06
 	BYTE	$08
 	BYTE	$06
-	BYTE	$04	; 137
+	BYTE	$06
+	BYTE	$04
+	BYTE	$06
+	BYTE	$08
+	BYTE	$06
+	BYTE	$08
+	BYTE	$08
+	BYTE	$0a
+	BYTE	$0a
+	BYTE	$08
+	BYTE	$08	
+	BYTE	$06
+	BYTE	$06
+	BYTE	$08
+	BYTE	$06
+	BYTE	$06
+	BYTE	$08
+	BYTE	$06
+	BYTE	$08
+	BYTE	$06
+	BYTE	$08
+	BYTE	$08
+	BYTE	$0a
+	BYTE	$08
+	BYTE	$06	; 169
+
 
 
 Castle_Background
 	BYTE	$d6
 	BYTE	$d8
 	BYTE	$da
-	BYTE	$1e
-	BYTE	$1c
+	BYTE	$da
+	BYTE	$d6
+	BYTE	$d4
+	BYTE	$d2
+	BYTE	$1a
+	BYTE	$1a
 	BYTE	$1c
 	BYTE	$1a
+	BYTE	$1c
+	BYTE	$1e
+	BYTE	$1e	
+	BYTE	$1c
+	BYTE	$1a
+	BYTE	$18
+	BYTE	$3a
 	BYTE	$3a
 	BYTE	$38
+	BYTE	$38
 	BYTE	$36
 	BYTE	$38
 	BYTE	$36
-	BYTE	$4a
-	BYTE	$46	; 151
+	BYTE	$38
+	BYTE	$36
+	BYTE	$48
+	BYTE	$48	
+	BYTE	$46
+	BYTE	$48
+	BYTE	$46
+	BYTE	$48
+	BYTE	$46
+	BYTE	$44
+	BYTE	$44
+	BYTE	$42
+	BYTE	$42
+	BYTE	$44
+	BYTE	$42
+	BYTE	$44
+	BYTE	$46
+	BYTE	$48	
+	BYTE	$48
+	BYTE	$46
+	BYTE	$48
+	BYTE	$36
+	BYTE	$38
+	BYTE	$38
+	BYTE	$36
+	BYTE	$34
+	BYTE	$36
+	BYTE	$38
+	BYTE	$3a
+	BYTE	$16
+	BYTE	$18
+	BYTE	$1c	; 231
+
+
+
+
+	align 256
 
 Dragon
  	.byte %00000000
@@ -999,7 +1096,7 @@ Dragon
  	.byte %10011010
  	.byte %10001100
  	.byte %00000000
- 	.byte %00000000	; 1 (163)
+ 	.byte %00000000	; 1 (12)
  	.byte %00100000
  	.byte %01000000
  	.byte %01000000
@@ -1011,7 +1108,7 @@ Dragon
  	.byte %01101100
  	.byte %01100000
  	.byte %11000000
- 	.byte %00000000	; 2 (175)
+ 	.byte %00000000	; 2 (24)
  	.byte %00010000
  	.byte %01100000
  	.byte %11001000
@@ -1023,7 +1120,7 @@ Dragon
  	.byte %01111010
  	.byte %00011100
  	.byte %00000000
- 	.byte %00000000	;4 (187)
+ 	.byte %00000000	;4 (36)
  	.byte %00111000
  	.byte %01001100
  	.byte %11010010
@@ -1049,7 +1146,7 @@ DragonColors
 	.byte #$8a
 	.byte #$88
 	.byte #$86
-	.byte #$84	; 199
+	.byte #$84	; 48
 
 UFO
  	.byte #%00111100
@@ -1060,7 +1157,7 @@ UFO
  	.byte #%01011010
  	.byte #%00100100
  	.byte #%00011000
- 	.byte #%00111100	; 1 (207)
+ 	.byte #%00111100	; 1 (56)
  	.byte #%01111110
  	.byte #%11111111
  	.byte #%01101101
@@ -1068,14 +1165,14 @@ UFO
  	.byte #%01011010
  	.byte #%00100100
  	.byte #%00011000
- 	.byte #%00111100	; 2 (215)
+ 	.byte #%00111100	; 2 (64)
  	.byte #%01111110
  	.byte #%11111111
  	.byte #%11011011
  	.byte #%11111111
  	.byte #%01011010
  	.byte #%00100100
- 	.byte #%00011000	; 3 (223)
+ 	.byte #%00011000	; 3 (72)
 
 UFOColors
 	byte #$02
@@ -1085,7 +1182,7 @@ UFOColors
 	byte #$9e
 	byte #$96
 	byte #$04
-	byte #$02	; 231
+	byte #$02	; 80
 
 
 	saveFreeBytes
@@ -1195,6 +1292,7 @@ EnterScreenBank2
 	STA	P0SpriteIndex ; 	Sets both indexes to 0;
 	STA	M0Y
 	STA	M1Y
+	STA	BLY
 
 	JSR	CallRandomBank2
 	AND	#%01111111
@@ -1207,6 +1305,11 @@ EnterScreenBank2
 	ADC	#10
 	STA	M1X
 
+	JSR	CallRandomBank2
+	AND	#%01111111
+	CLC
+	ADC	#55
+	STA	BLX
 
 	LDA	#26
 	STA	pfIndex
@@ -1222,7 +1325,7 @@ EnterScreenBank2
 	LDA	#7
 	STA	P1Height
 
-	LDA	#96
+	LDA	#90
 	STA	P1X
 	
 	LDA	#33
@@ -1237,12 +1340,6 @@ EnterScreenBank2
 
 	LDA	#$00
 	STA	M1Color
-
-	LDA	pfEdges 	; Sets the Edge detection and also sets it to
-	AND	#%00111111	; make objects appear on the other side
-	ORA	#%11000000
-	STA	pfEdges
-	
 
 
 	; set this for static, we will see if we can add advanced colours.
@@ -1278,6 +1375,41 @@ OverScanBank2
 * This is where the game code
 * begins.
 *
+	LDA	SWCHB
+	AND	#%11000000
+	STA	temp01
+	LDA	pfEdges
+	AND	#%00111111
+	ORA	temp01
+	STA	pfEdges
+
+	LDA	#%00000010
+	BIT	SWCHB
+	BNE	NotPressedSelect
+	LDA	counter
+	AND	#%11110000
+	STA	temp01
+	LDA	pfBaseColor
+	AND	#%00001111
+	ORA	temp01
+	STA	pfBaseColor
+
+NotPressedSelect
+
+
+	LDA	#%00000001
+	BIT	SWCHB
+	BNE	NotPressedReset
+	LDA	counter
+	AND	#%11110000
+	STA	temp01
+	LDA	bkBaseColor
+	AND	#%00001111
+	ORA	temp01
+	STA	bkBaseColor
+
+NotPressedReset
+
 
 	LDA	counter
 
@@ -1307,6 +1439,8 @@ NOINC
 	ADC	#1
 
 	STA	temp01
+	NOP			; Needs a meaningless NOP because it will write to SARA
+				; if not put there.
 	LDA	P0SpriteIndex
 	AND	#%11110000
 	ORA	temp01
@@ -1397,6 +1531,14 @@ NoMoreMoveForSure
 	DEC	M1Y
 	INC	M0X
 	DEC	M1X
+	INC	BLY
+	LDA	counter
+	BPL	ZigZag
+	DEC	BLX
+	JMP	NoMissileMovement
+ZigZag
+	INC	BLX
+
 NoMissileMovement
 
 	JMP	NOTESTING
@@ -1404,19 +1546,26 @@ NoMissileMovement
 TESTING
 *	LDA	P1Settings
 *	AND	#%11111000
-*	ORA	#%00000000
+*	ORA	#%00110100
 *	STA	P1Settings
+*	STA	P0Settings
+
+	LDA	pfSettings
+	AND	#%11001111
+	ORA	#%00110000
+	STA	pfSettings
+
 	INC	P0X
 	DEC	P1X
 	LDA	counter
 	AND	#%00000111
 	CMP 	#%00000111
 	BNE	NoVerMove
-*	INC	P0Y
+	INC	P0Y
 	DEC	P1Y
 
 NoVerMove
-*	JMP 	NoMoreMoveForSure
+	JMP 	NoMoreMoveForSure
 NOTESTING
 
 *VSYNC
@@ -1834,7 +1983,7 @@ clearmem
    	inx
    	txs
    	pha
-	cpx	#$ff
+	cpx	#$00
    	bne	clearmem	; Clear the RAM.
 
 	LDA	$F080		; Sets two values for the SC RAM 
@@ -1842,8 +1991,9 @@ clearmem
 	LDA	$F081
 	STA	$81
 
-	LDY	#0
-	TAY		
+	LDY	#0		
+	TYA
+	STA	$F029
 ClearSCRAM
 	STA 	$F000,Y
 	INY
