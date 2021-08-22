@@ -1,4 +1,0 @@
-These subscripts are designed for opening the output the main Python application creates from translating the midi code and then giving back the assembly code for further work.
-1. The converter get the 1-4 midi channels for the 0th and 1th channel of the Atari 2600, so you can use 8 of the 16 midi can have. It searches for the matching notes, then outputs the new ones. Also it creates versions with one octave -1/+1.
-2. Mixer get the channels designed for the two TIA channels and mixes them so. 1 is the hgihest priority, if it is silent, it fills it with the second, it its silent, it uses the third and so. You get the output for the two channels. Also it creates versions with one octave -1/+1.
-3. If SID effect was activated, it will mix the outputs so at every n-th frame it changes from the original to the changed octave, making the music less off for the ear. It only works well with tremble sound channels of the Atari 2600. 
